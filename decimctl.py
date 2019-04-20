@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 
 import datetime
 import itertools
@@ -22,11 +22,12 @@ class Decimator(pylibftdi.device.Device):
     def _open_device(self):
         return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), 8543, 24576, None, None, 0)
 
-    # Number of bytes to write/read at a time.
+    # Number of bytes to write/read at a time. If its buffer
+    # overflows, the FTDI chip will block on writes.
     CHUNK_SIZE = 256
     
     def clock_raw_bytes(self, data_in):
-        """Clocks in raw bytes and returns the corresponding output.
+        """Clock in raw bytes and return the corresponding output.
 
         Args:
           data_in: bytes
@@ -55,7 +56,7 @@ class Decimator(pylibftdi.device.Device):
             b = int(bitstr, 2)
             status_bytes.append(b)
             print (bitstr, b, chr(int(bitstr, 2)))
-        return status_bytes
+        return bytes(status_bytes)
 
     def read_bytes(self, n):
         data = b'\x00\x40\x40\x00'*4096
