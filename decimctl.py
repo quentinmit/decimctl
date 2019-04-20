@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import os
 import datetime
-import itertools
+from itertools import chain
+from functools import reduce
 import pylibftdi.driver
 pylibftdi.driver.USB_VID_LIST = [8543]
 pylibftdi.driver.USB_PID_LIST = [24576]
@@ -12,12 +14,17 @@ from ctypes import byref
 
 print (pylibftdi.driver.Driver().list_devices())
 
+os.chdir("logs")
+
+def now():
+    return datetime.datetime.now().isoformat()
+
 class Decimator(pylibftdi.device.Device):
     def __init__(self, log_raw_data=False):
         super(Decimator, self).__init__(mode='b')
         self.log_file = None
         if log_raw_data:
-            self.log_file = open("%s.raw" % (datetime.datetime.now().isoformat(),), 'wb')
+            self.log_file = open("%s.raw" % now(), 'wb')
 
     def _open_device(self):
         return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), 8543, 24576, None, None, 0)
@@ -40,7 +47,7 @@ class Decimator(pylibftdi.device.Device):
             self.write(to_send)
             out += self.read(len(to_send))
         if self.log_file:
-            self.log_file.write(bytes(bytearray(itertools.chain.from_iterable(zip(data_in, out)))))
+            self.log_file.write(bytes(bytearray(chain.from_iterable(zip(data_in, out)))))
         return out
 
     @staticmethod
@@ -50,12 +57,12 @@ class Decimator(pylibftdi.device.Device):
             if raw[i+2] != raw[i+3]:
                 print ("difference at bit", i)
             status_bits.append(bool(raw[i+2] & 0x8))
-        status_bytes = bytearray()
-        for i in range(0, len(status_bits), 8):
-            bitstr = ''.join([str(int(x)) for x in status_bits[i:i+8]])
-            b = int(bitstr, 2)
-            status_bytes.append(b)
-            print (bitstr, b, chr(int(bitstr, 2)))
+        status_bytes = bytearray(
+            reduce(lambda a, b: (a << 1) | b, (int(x) for x in byte_bits))
+            for byte_bits
+            in zip(*[iter(status_bits)]*8)
+        )
+        #print (bitstr, b, chr(int(bitstr, 2)))
         return bytes(status_bytes)
 
     def read_bytes(self, n):
@@ -98,6 +105,7 @@ with Decimator(log_raw_data=True) as dev:
     # FT_Write(16384 chars)
     # + FT_Read(16384)
     status_bytes = dev.read_bytes(4096)
+    open('%s-status.dat' % now(), 'wb').write(status_bytes)
     print (status_bytes)
     # FT_Write([0])
     # + Block until FT_GetStatus() = 1
