@@ -44,7 +44,7 @@ def bytes_to_raw_command(command):
     # N.B. This is *NOT* the inverse of _raw_response_to_bytes.
     # Commands use three cycles per bit; responses use four cycles per bit.
     data = bytearray()
-    for c in b:
+    for c in command:
         for i in range(7, -1, -1):
             data.extend(b'\x08\x48\x08' if (c & (1 << i)) else b'\x00\x40\x00')
     return bytes(data)
