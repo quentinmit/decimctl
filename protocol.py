@@ -36,10 +36,10 @@ def raw_response_to_bytes(raw):
     #print (bitstr, b, chr(int(bitstr, 2)))
     return _bit_list_to_bytes(status_bits)
 
-READ_PREAMBLE = b'\x00\x40\x00\x40\x48\x48\x40\x00'
+READ_PREAMBLE  = b'\x00\x40\x00\x40\x48\x48\x40\x00'
+WRITE_PREAMBLE = b'\x00\x40\x00\x40\x48\x48\x40\x00'
+WRITE_POSTAMBLE = b'\x00\x40\x48'
 
-COMMAND_PREAMBLE = b'\x00\x40\x00\x40\x48\x48\x40\x00'
-COMMAND_POSTAMBLE = b'\x00\x40\x48'
 def bytes_to_raw_command(command):
     # N.B. This is *NOT* the inverse of _raw_response_to_bytes.
     # Commands use three cycles per bit; responses use four cycles per bit.

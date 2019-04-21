@@ -59,18 +59,11 @@ class Decimator(pylibftdi.device.Device):
         raw = dev.clock_raw_bytes(data)
         return protocol.raw_response_to_bytes(raw)
 
-    def write_bytes(self, command, postamble=b''):
-        # \x00\x01 = get status
-        # \x00\x62\x00 + (raw)\x00\x40\x48 = set SDI OUT to SDI IN
-        # \x00\x62\x02 + (raw)\x00\x40\x48 = set SDI OUT to SCALER
-        data = protocol.COMMAND_PREAMBLE + protocol.bytes_to_raw_command(command) + postamble
-        return self.clock_raw_bytes(data)
-
     def fpga_write_bytes(register, value):
         # @TUSB@FPGA_WRITE_BYTES$q ui puc ui ui
         # CPA_SO_Source calls @TUSB@FPGA_WRITE_BYTES(0, &value, 0x31, 0x1) where value is 0->3
 
-        buf = bytearray(protocol.COMMAND_PREAMBLE)
+        buf = bytearray(protocol.WRITE_PREAMBLE)
 
         address = (register<<1) & 0xfffe
 
@@ -78,12 +71,12 @@ class Decimator(pylibftdi.device.Device):
 
         buf.extend(protocol.bytes_to_raw_command(value))
 
-        buf.extend(protocol.COMMAND_POSTAMBLE)
+        buf.extend(protocol.WRITE_POSTAMBLE)
 
         return self.clock_raw_bytes(bytes(buf))
 
     def fpga_read_bytes(register_start, length):
-
+        # N.B. In UCP, they shift the length left by 3. Why?
         buf = bytearray(protocol.READ_PREAMBLE)
 
         buf.extend(protocol.bytes_to_raw_command(pack(">H", address)))
