@@ -15,10 +15,6 @@ from ctypes import byref
 
 import protocol
 
-print (pylibftdi.driver.Driver().list_devices())
-
-os.chdir("logs")
-
 def now():
     return datetime.datetime.now().isoformat()
 
@@ -58,7 +54,7 @@ class Decimator(pylibftdi.device.Device):
         self.ftdi_fn.ftdi_set_bitmode(0, 4)
         # FT_Write("H")
         # + Block until FT_GetStatus returns 1
-        print (self.clock_raw_bytes(b'\x48'))
+        self.clock_raw_bytes(b'\x48')
         # FT_SetBitMode(72, 4)
         # This sets the FPGA clock and data pins to be outputs (in to the FPGA).
         self.ftdi_fn.ftdi_set_bitmode(0x48, 4)
@@ -152,6 +148,10 @@ class Decimator(pylibftdi.device.Device):
     CPA_DUCFormat = 0x22 # & 0x1f
     
 if __name__ == "__main__":
+    print (pylibftdi.driver.Driver().list_devices())
+
+    os.chdir("logs")
+
     with Decimator(log_raw_data=True) as dev:
         dev.set_SO_Source(0)
 
@@ -159,9 +159,12 @@ if __name__ == "__main__":
         open('%s-status.dat' % now(), 'wb').write(status_bytes)
         print (status_bytes)
 
-        import time
-        while True:
-            time.sleep(1)
-            dev.set_SO_Source(1)
-            time.sleep(1)
-            dev.set_SO_Source(0)
+        print (protocol.CPA_Registers.from_buffer_copy(status_bytes))
+
+        if False:
+            import time
+            while True:
+                time.sleep(1)
+                dev.set_SO_Source(1)
+                time.sleep(1)
+                dev.set_SO_Source(0)

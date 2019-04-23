@@ -19,6 +19,8 @@ Bit 7 (0x80): Unknown (used in firmware erase)
 """
 
 from functools import reduce
+from ctypes import BigEndianStructure, c_ubyte, c_ushort, Array
+import enum
 
 def _bit_list_to_bytes(bits):
     return bytes(
@@ -62,4 +64,98 @@ def raw_command_to_bytes(data):
                 edge = True
                 command_bits.append(bool(byte & 0x08))
     return command_bits, _bit_list_to_bytes(command_bits)
+
+class Registers(BigEndianStructure):
+    _map = {}
+
+    def __getattribute__(self, name):
+        _map = BigEndianStructure.__getattribute__(self, '_map')
+        value = BigEndianStructure.__getattribute__(self, name)
+        if name in _map:
+            EnumClass = _map[name]
+            if isinstance(value, Array):
+                return [EnumClass(x) for x in value]
+            else:
+                return EnumClass(value)
+        else:
+            return value
+
+    def __str__(self):
+        result = []
+        result.append("struct {0} {{".format(self.__class__.__name__))
+        for field in self._fields_:
+            attr, attrType = field[:2]
+            if attr in self._map:
+                attrType = self._map[attr]
+            value = getattr(self, attr)
+            if isinstance(value, Array):
+                value = list(value)
+            result.append("    {0} [{1}] = {2!r};".format(attr, attrType.__name__, value))
+        result.append("};")
+        return '\n'.join(result)
+
+    __repr__ = __str__
+
+class DUC_Source(enum.IntEnum):
+    SDI_IN = 0
+    HDMI_IN = 1
+
+class DUC_Ref(enum.IntEnum):
+    Source = 0
+    Free_Run = 1
+    SDI_IN = 2
+    HDMI_IN = 3
+
+class LCDOffTime(enum.IntEnum):
+    OFF_5s = 0
+    OFF_15s = 1
+    OFF_30s = 2
+    OFF_1m = 3
+    OFF_5m = 4
+    OFF_10m = 5
+    OFF_30m = 6
+    NEVER = 7
+
+class CPA_Registers(Registers):
+    _pack_ = 1
+    _fields_ = [
+        # 0x00
+        ("magic", c_ubyte * 2),
+        ("version_major", c_ushort, 16),
+        ("version_minor", c_ushort, 16),
+        ("unknown06", c_ubyte * 10),
+        # 0x10
+        ("unknown10", c_ubyte * 16),
+        # 0x20
+        ("unknown20", c_ubyte * 2),
+        ("DUCFormat", c_ubyte), # 0x22
+        ("unknown23", c_ubyte * 8),
+        ("Loop_Enable", c_ubyte), # 0x2b
+        ("unknown2c", c_ubyte * 4),
+        # 0x30
+        ("HO_Type", c_ubyte),
+        ("SO_Source", c_ubyte),
+        ("HO_Source", c_ubyte),
+        ("unknownDUC", c_ubyte, 4),
+        ("DUC_Ref", c_ubyte, 3),
+        ("DUC_Source", c_ubyte, 1),
+        ("unknown34", c_ubyte),
+        ("LCDOffTime", c_ubyte), # 5s, 15s, 30s, 1m, 5m, 10m, 30m, NEVER
+    ]
+
+    _map = {
+        "DUC_Ref": DUC_Ref,
+        "DUC_Source": DUC_Source,
+        "LCDOffTime": LCDOffTime,
+    }
+
+    # def __str__(self):
+    #     out = []
+    #     for field in self._fields_:
+    #         value = getattr(self, field[0])
+    #         value = getattr(value, "value", value)
+    #         if isinstance(value, Array):
+    #             value = list(value)
+    #         out.append("%s: %s" % (field[0], value))
+    #     return "\n".join(out)
 
