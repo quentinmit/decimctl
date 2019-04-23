@@ -96,6 +96,22 @@ class Registers(BigEndianStructure):
 
     __repr__ = __str__
 
+class HO_Type(enum.IntEnum):
+    DVI_RGB_444 = 0
+    HDMI_RGB_444_2ch = 1
+    HDMI_YCbCr_444_2ch = 2
+    HDMI_YCbCr_422_2ch = 3
+    HDMI_RGB_444_8ch = 4
+    HDMI_YCbCr_444_8ch = 5
+    HDMI_YCbCr_422_8ch = 6
+
+class SO_Source(enum.IntEnum):
+    SDI_IN = 0
+    HDMI_IN = 1
+    DUC = 2
+
+HO_Source = SO_Source
+
 class DUC_Source(enum.IntEnum):
     SDI_IN = 0
     HDMI_IN = 1
@@ -144,6 +160,9 @@ class CPA_Registers(Registers):
     ]
 
     _map = {
+        "HO_Type": HO_Type,
+        "SO_Source": SO_Source,
+        "HO_Source": HO_Source,
         "DUC_Ref": DUC_Ref,
         "DUC_Source": DUC_Source,
         "LCDOffTime": LCDOffTime,
