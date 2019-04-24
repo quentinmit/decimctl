@@ -22,14 +22,19 @@ from struct import pack
 from itertools import chain
 from functools import reduce
 import pylibftdi.driver
-pylibftdi.driver.USB_VID_LIST = [8543]
-pylibftdi.driver.USB_PID_LIST = [24576]
 import pylibftdi.device
-pylibftdi.device.USB_VID_LIST = pylibftdi.driver.USB_VID_LIST
-pylibftdi.device.USB_PID_LIST = pylibftdi.driver.USB_PID_LIST
 from ctypes import byref, sizeof, cast, c_char_p, c_void_p, pointer, POINTER, Structure, create_string_buffer
 
 from . import protocol
+
+VID = 0x215f
+PID = 0x6000
+
+# TODO: Push a patch upstream to allow pylibftdi to accept the VID/PID at runtime.
+pylibftdi.driver.USB_VID_LIST = [VID]
+pylibftdi.driver.USB_PID_LIST = [PID]
+pylibftdi.device.USB_VID_LIST = pylibftdi.driver.USB_VID_LIST
+pylibftdi.device.USB_PID_LIST = pylibftdi.driver.USB_PID_LIST
 
 def now():
     return datetime.datetime.now().isoformat()
@@ -58,7 +63,7 @@ class Device(pylibftdi.device.Device):
         serial = None
         if self._requested_serial:
             serial = c_char_p(serial)
-        return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), 8543, 24576, None, serial, 0)
+        return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), VID, PID, None, serial, 0)
 
     def _get_info(self):
         self.fdll.ftdi_usb_get_strings2.argtypes = self.fdll.ftdi_usb_get_strings.argtypes
