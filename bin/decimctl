@@ -46,9 +46,9 @@ def main():
     device_parser.add_argument('--serial', help='serial number of device to control')
     
     parser = argparse.ArgumentParser(prog='decimctl')
-    parser.add_argument('log_raw_data', action='store_true', help='log raw data to a file in the current directory')
+    parser.add_argument('--log_raw_data', action='store_true', help='log raw data to a file in the current directory')
 
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(dest='command', metavar='command', required=True)
 
     parser_list = subparsers.add_parser('list', help='list devices')
     parser_list.set_defaults(func=list_devices)
