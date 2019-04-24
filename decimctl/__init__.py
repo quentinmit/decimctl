@@ -1,4 +1,20 @@
-#!/usr/bin/env python3
+"""
+Module for interfacing with Decimator Design products.
+
+Copyright 2019 Quentin Smith <quentin@mit.edu>
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 import os
 import datetime
@@ -10,13 +26,16 @@ pylibftdi.driver.USB_VID_LIST = [8543]
 pylibftdi.driver.USB_PID_LIST = [24576]
 import pylibftdi.device
 pylibftdi.device.USB_VID_LIST = pylibftdi.driver.USB_VID_LIST
-pylibftdi.device.USB_PID_LIST = pylibftdi.device.USB_VID_LIST
+pylibftdi.device.USB_PID_LIST = pylibftdi.driver.USB_PID_LIST
 from ctypes import byref, sizeof, cast, c_char_p, c_void_p, pointer, POINTER, Structure, create_string_buffer
 
-import protocol
+from . import protocol
 
 def now():
     return datetime.datetime.now().isoformat()
+
+def list_devices():
+    return pylibftdi.driver.Driver().list_devices()
 
 class ftdi_context(Structure):
     _fields_ = [
@@ -24,7 +43,7 @@ class ftdi_context(Structure):
         ('usb_dev', c_void_p),
     ]
 
-class Decimator(pylibftdi.device.Device):
+class Device(pylibftdi.device.Device):
     def __init__(self, log_raw_data=False, serial=None):
         self.log_file = None
         if log_raw_data:
@@ -33,7 +52,7 @@ class Decimator(pylibftdi.device.Device):
         self._serial = create_string_buffer(128)
         self._desc = create_string_buffer(128)
 
-        super(Decimator, self).__init__(mode='b')
+        super(Device, self).__init__(mode='b')
 
     def _open_device(self):
         serial = None
@@ -52,7 +71,7 @@ class Decimator(pylibftdi.device.Device):
     def open(self):
         if self._opened:
             return
-        super(Decimator, self).open()
+        super(Device, self).open()
 
         self._get_info()
 
@@ -86,7 +105,7 @@ class Decimator(pylibftdi.device.Device):
         # FT_SetBitMode(0, 0)
         self.ftdi_fn.ftdi_set_bitmode(0, 0)
         # FT_Close()
-        super(Decimator, self).close()
+        super(Device, self).close()
 
     @property
     def serial(self):
@@ -249,7 +268,7 @@ if __name__ == "__main__":
 
     os.chdir("logs")
 
-    with Decimator(log_raw_data=True) as dev:
+    with Device(log_raw_data=True) as dev:
         print(dev.serial)
         dev.CPA.SO_Source = 0
 

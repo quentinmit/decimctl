@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+
+import argparse
+import decimctl
+import os
+import enum
+
+def list_devices(args):
+    devices = decimctl.list_devices()
+    if not devices:
+        print("No devices found")
+        os.exit(1)
+    for manufacturer, desc, serial in devices:
+        print("Model: %s Serial: %s" % (desc, serial))
+
+def _create_device(args):
+    return decimctl.Device(log_raw_data=args.log_raw_data, serial=args.serial)
+
+def registers(args):
+    d = _create_device(args)
+    print(d.raw_registers)
+
+def status(args):
+    d = _create_device(args)
+    print(d.registers)
+
+def set_register(args):
+    d = _create_device(args)
+    d.fpga_write_bytes(args.register, args.value)
+
+def set(args):
+    d = _create_device(args)
+    r = d.registers
+    try:
+        value = int(args.value, 0)
+    except ValueError:
+        old = getattr(r, args.name)
+        if isinstance(old, enum.Enum):
+            value = type(old)[args.value]
+        else:
+            raise ValueError('unable to parse value as an integer')
+    setattr(d.registers, args.name, value)
+
+def main():
+    device_parser = argparse.ArgumentParser(add_help=False)
+    device_parser.add_argument('--serial', help='serial number of device to control')
+    
+    parser = argparse.ArgumentParser(prog='decimctl')
+    parser.add_argument('log_raw_data', action='store_true', help='log raw data to a file in the current directory')
+
+    subparsers = parser.add_subparsers(help='sub-command help')
+
+    parser_list = subparsers.add_parser('list', help='list devices')
+    parser_list.set_defaults(func=list_devices)
+
+    parser_registers = subparsers.add_parser('registers', parents=[device_parser], help='print raw register values')
+    parser_registers.set_defaults(func=registers)
+
+    parser_set_register = subparsers.add_parser('set_register', parents=[device_parser], help='set raw register value')
+    parser_set_register.add_argument('register', type=int, help='register number to set')
+    parser_set_register.add_argument('value', type=bytes, help='value to set')
+    parser_set_register.set_defaults(func=set_register)
+
+    parser_status = subparsers.add_parser('status', parents=[device_parser], help='show processed device status')
+    parser_status.set_defaults(func=status)
+
+    parser_set = subparsers.add_parser('set', parents=[device_parser], help='set a parameter')
+    parser_set.add_argument('name', help='parameter name')
+    parser_set.add_argument('value', help='parameter value (integer or string if supported)')
+    parser_set.set_defaults(func=set)
+
+    args = parser.parse_args()
+    args.func(args)
+
+if __name__ == '__main__':
+    main()
