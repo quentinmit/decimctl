@@ -170,19 +170,6 @@ class Decimator(pylibftdi.device.Device):
         ret._device = self
         return ret
 
-    def set_SO_Source(self, source):
-        # CPA_SO_Source = register 0x31, & 0x3
-        self.fpga_write_bytes(self.CPA_SO_Source, pack('>B', source & 0x3))
-
-    CPA_HO_Type = 0x30 # & 0x7
-    CPA_SO_Source = 0x31 # & 0x3
-    CPA_HO_Source = 0x32 # & 0x3
-    CPA_DUC_Source = 0x33 # bottom bit = SDI/HDMI as source, top 3 bits = Source, Free Run, SDI IN, HDMI IN
-    CPA_LCDOffTime = 0x35 # & 0x7
-    # 5s, 15s, 30s, 1m, 5m, 10m, 30m, NEVER
-    CPA_Loop_Enable = 0x2b # & 0x1
-    CPA_DUCFormat = 0x22 # & 0x1f
-
     # To identify the type, look at the first 3 characters of the serial number
     # DHA, DHB => DHA
     # DUC => DUC
@@ -221,18 +208,18 @@ if __name__ == "__main__":
 
     with Decimator(log_raw_data=True) as dev:
         print(dev.serial)
-        dev.set_SO_Source(0)
+        dev.CPA.SO_Source = 0
 
-        status_bytes = dev.fpga_read_bytes(0, 0x200)
+        status_bytes = dev.raw_registers
         open('%s-status.dat' % now(), 'wb').write(status_bytes)
         print (status_bytes)
 
-        print (protocol.CPA_Registers.from_buffer_copy(status_bytes))
+        print (dev.CPA)
 
         if False:
             import time
             while True:
                 time.sleep(1)
-                dev.set_SO_Source(1)
+                dev.CPA.SO_Source = 1
                 time.sleep(1)
-                dev.set_SO_Source(0)
+                dev.CPA.SO_Source = 0
