@@ -159,7 +159,16 @@ class Decimator(pylibftdi.device.Device):
         # + Block until FT_GetStatus() = 3
         self.clock_raw_bytes(b'\x00\x40\x48')
         return data
-        
+
+    @property
+    def raw_registers(self):
+        return self.fpga_read_bytes(0, 0x200)
+
+    @property
+    def CPA(self):
+        ret = protocol.CPA_Registers.from_buffer_copy(self.raw_registers)
+        ret._device = self
+        return ret
 
     def set_SO_Source(self, source):
         # CPA_SO_Source = register 0x31, & 0x3

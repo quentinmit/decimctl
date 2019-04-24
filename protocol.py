@@ -96,6 +96,20 @@ class Registers(BigEndianStructure):
 
     __repr__ = __str__
 
+    def __setattr__(self, name, value):
+        field = getattr(type(self), name, None)
+        if field and not hasattr(self, "_device"):
+            raise ValueError("registers not linked to device")
+        super(BigEndianStructure, self).__setattr__(name, value)
+        if not field:
+            return
+        register_start = field.offset
+        length = field.size
+        if length > 0xFFFF:
+            length = ((length >> 16) + 7) // 8
+        self._device.fpga_write_bytes(register_start, bytes(self)[register_start:register_start+length])
+
+
 class DUCFormat(enum.IntEnum):
     SD_720x480i59_94 = 0
     SD_720x576i50 = 1
