@@ -96,6 +96,36 @@ class Registers(BigEndianStructure):
 
     __repr__ = __str__
 
+class DUCFormat(enum.IntEnum):
+    SD_720x480i59_94 = 0
+    SD_720x576i50 = 1
+    HD_1920x1080i60 = 2
+    HD_1920x1080i59_94 = 3
+    HD_1920x1080i50 = 4
+    HD_1920x1080p30 = 5
+    HD_1920x1080p29_97 = 6
+    HD_1920x1080p25 = 7
+    HD_1920x1080p24 = 8
+    HD_1920x1080p23_98 = 9
+    HD_1280x720p60 = 10
+    HD_1280x720p59_94 = 11
+    HD_1280x720p50 = 12
+    HD_1280x720p30 = 13
+    HD_1280x720p29_97 = 14
+    HD_1280x720p25 = 15
+    HD_1280x720p24 = 16
+    HD_1280x720p23_98 = 17
+    THREEG_1920x1080p60 = 18
+    THREEG_1920x1080p59_94 = 19
+    THREEG_1920x1080p50 = 20
+
+class DUC_HF(enum.IntEnum):
+    AUTO = 0
+    NONE = 1
+    LOW = 2
+    MEDIUM = 3
+    HIGH = 4
+
 class HO_Type(enum.IntEnum):
     DVI_RGB_444 = 0
     HDMI_RGB_444_2ch = 1
@@ -143,23 +173,85 @@ class CPA_Registers(Registers):
         # 0x10
         ("unknown10", c_ubyte * 16),
         # 0x20
-        ("unknown20", c_ubyte * 2),
-        ("DUCFormat", c_ubyte), # 0x22
-        ("unknown23", c_ubyte * 8),
+        ("PSFINEnable", c_ubyte), # & 0x1
+        ("unknown21", c_ubyte),
+        ("DUCFormat", c_ubyte), # 0x22 & 0x1f
+        ("DUC_S2S_Aspect", c_ubyte), # & 0x1f
+        ("DUC_S2H_Aspect", c_ubyte), # & 0x1f
+        ("DUC_H2S_Aspect", c_ubyte), # & 0x1f
+        ("DUC_H2H_Aspect", c_ubyte), # & 0x1f
+        ("unknownDUC_TH1", c_ubyte, 5),
+        ("DUC_TH1", c_ushort, 11), # & 0x3FF
+        ("unknown29", c_ubyte),
+        ("unknownDUC_HF", c_ubyte, 5),
+        ("DUC_HF", c_ubyte, 3), # & 0x7
         ("Loop_Enable", c_ubyte), # 0x2b
-        ("unknown2c", c_ubyte * 4),
+        ("OUT_3G_B", c_ubyte), # & 0x1
+        ("unknown2d", c_ubyte, 6),
+        ("DUC_V_FLIP_EN", c_ubyte, 1), # & 0x2
+        ("DUC_H_FLIP_EN", c_ubyte, 1), # & 0x1
+        ("unknown2e", c_ubyte),
+        ("AutoSave", c_ubyte),
         # 0x30
-        ("HO_Type", c_ubyte),
-        ("SO_Source", c_ubyte),
-        ("HO_Source", c_ubyte),
+        ("HO_Type", c_ubyte), # & 0x7
+        ("SO_Source", c_ubyte), # & 0x3
+        ("HO_Source", c_ubyte), # & 0x3
         ("unknownDUC", c_ubyte, 4),
-        ("DUC_Ref", c_ubyte, 3),
-        ("DUC_Source", c_ubyte, 1),
-        ("unknown34", c_ubyte),
+        ("DUC_Ref", c_ubyte, 3), # & 0x3
+        ("DUC_Source", c_ubyte, 1), # & 0x1
+        ("Overlay", c_ubyte), # & 0x3
         ("LCDOffTime", c_ubyte), # 5s, 15s, 30s, 1m, 5m, 10m, 30m, NEVER
+        ("ReturnToStatusTime", c_ubyte), # & 0x7
+        ("LXA_Out", c_ubyte), # & 0x3
+        ("HDMI_Pair2", c_ubyte, 4),
+        ("HDMI_Pair1", c_ubyte, 4),
+        ("HDMI_Pair4", c_ubyte, 4),
+        ("HDMI_Pair3", c_ubyte, 4),
+        ("SDI_Pair2", c_ubyte, 4), # & 0xf
+        ("SDI_Pair1", c_ubyte, 4), # & 0xf0
+        ("SDI_Pair4", c_ubyte, 4),
+        ("SDI_Pair3", c_ubyte, 4),
+        ("SDI_Pair6", c_ubyte, 4),
+        ("SDI_Pair5", c_ubyte, 4),
+        ("SDI_Pair8", c_ubyte, 4),
+        ("SDI_Pair7", c_ubyte, 4),
+        ("unknown3e", c_ubyte * 2),
+        # 0x40
+        ("OSINFormatEnable", c_ubyte), # & 0x3
+        ("OSFormatForeground", c_ubyte), # & 0x1f
+        ("OSFormatBackground", c_ubyte), # & 0x1f
+        ("NoSignalForeground", c_ubyte), # & 0x7
+        ("NoSignalBackground", c_ubyte), # & 0x7
+        ("UMDEnable", c_ubyte), # & 0x1
+        ("UMDForeground", c_ubyte), # & 0x1f
+        ("UMDBackground", c_ubyte), # & 0x1f
+        ("unknown48", c_ubyte * 8),
+        # 0x50
+        ("unknown50", c_ubyte * 16),
+        # 0x60
+        ("unknown60", c_ubyte, 4),
+        ("AM4_EN", c_ubyte, 1),
+        ("AM3_EN", c_ubyte, 1),
+        ("AM2_EN", c_ubyte, 1),
+        ("AM1_EN", c_ubyte, 1),
+        ("Scale_EN", c_ubyte, 1),
+        ("AM_Transparency", c_ubyte, 2), # & 0x60
+        ("AM_Combination", c_ubyte, 2), # & 0x18
+        ("AM_Style", c_ubyte, 3), # & 0x7
+        ("unknown62", c_ubyte * 14),
+        # 0x70
+        ("unknown70", c_ubyte * 16),
+        # 0x80
+        ("unknown80", c_ubyte, 7),
+        ("TPG_EN", c_ubyte, 1), # & 0x1
+        ("TPG_Pattern", c_ubyte), # & 0x3f
+        ("SO_Test_Audio", c_ubyte), # & 0x3
+        ("HO_Test_Audio", c_ubyte), # & 0x3
     ]
 
     _map = {
+        "DUCFormat": DUCFormat,
+        "DUC_HF": DUC_HF,
         "HO_Type": HO_Type,
         "SO_Source": SO_Source,
         "HO_Source": HO_Source,

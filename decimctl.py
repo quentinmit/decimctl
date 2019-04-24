@@ -11,27 +11,46 @@ pylibftdi.driver.USB_PID_LIST = [24576]
 import pylibftdi.device
 pylibftdi.device.USB_VID_LIST = pylibftdi.driver.USB_VID_LIST
 pylibftdi.device.USB_PID_LIST = pylibftdi.device.USB_VID_LIST
-from ctypes import byref
+from ctypes import byref, sizeof, cast, c_void_p, pointer, POINTER, Structure, create_string_buffer
 
 import protocol
 
 def now():
     return datetime.datetime.now().isoformat()
 
+class ftdi_context(Structure):
+    _fields_ = [
+        ('usb_ctx', c_void_p),
+        ('usb_dev', c_void_p),
+    ]
+
 class Decimator(pylibftdi.device.Device):
     def __init__(self, log_raw_data=False):
         self.log_file = None
         if log_raw_data:
             self.log_file = open("%s.raw" % now(), 'wb')
+        self._serial = create_string_buffer(128)
+        self._desc = create_string_buffer(128)
+
         super(Decimator, self).__init__(mode='b')
 
     def _open_device(self):
         return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), 8543, 24576, None, None, 0)
 
+    def _get_info(self):
+        self.fdll.ftdi_usb_get_strings2.argtypes = self.fdll.ftdi_usb_get_strings.argtypes
+        usb_dev_handle = cast(pointer(self.ctx), POINTER(ftdi_context)).contents.usb_dev
+        self.fdll.libusb_get_device.argtypes = (c_void_p,)
+        self.fdll.libusb_get_device.restype = c_void_p
+        usb_dev = self.fdll.libusb_get_device(usb_dev_handle)
+        self.ftdi_fn.ftdi_usb_get_strings2(usb_dev, None, 0, self._desc, 127, self._serial, 127)
+
     def open(self):
         if self._opened:
             return
         super(Decimator, self).open()
+
+        self._get_info()
 
         # FT_ResetDevice()
         self.ftdi_fn.ftdi_usb_reset()
@@ -64,6 +83,14 @@ class Decimator(pylibftdi.device.Device):
         self.ftdi_fn.ftdi_set_bitmode(0, 0)
         # FT_Close()
         super(Decimator, self).close()
+
+    @property
+    def serial(self):
+        return self._serial.value
+
+    @property
+    def desc(self):
+        return self._desc.value
 
     # Number of bytes to write/read at a time. If its buffer
     # overflows, the FTDI chip will block on writes.
@@ -146,6 +173,37 @@ class Decimator(pylibftdi.device.Device):
     # 5s, 15s, 30s, 1m, 5m, 10m, 30m, NEVER
     CPA_Loop_Enable = 0x2b # & 0x1
     CPA_DUCFormat = 0x22 # & 0x1f
+
+    # To identify the type, look at the first 3 characters of the serial number
+    # DHA, DHB => DHA
+    # DUC => DUC
+    # CLA, LLA => CPA(0) # _CPA_HX_V1
+    # CLB, LLB => CPA(1) # _CPA_HX_V1
+    # CLC, LLC => CPA(2) # _CPA_HX_V1
+    # CLD, LLD => CPA(3) # _CPA_HX_V2
+    # CPA, LPA => CPA(4) # _CPA_CROSS_V1
+    # CPB, LPB => CPA(5) # _CPA_CROSS_V2
+    # CPC, LPC => CPA(6) # _CPA_CROSS_V2
+    # ??? => CPA(7) # _CPA_CROSS_V3
+    # CXA, LXA => CPA(8) # _CPA_LX
+    # CXB, LXB => CPA(9) # _CPA_LX
+    # MQS => MQS
+    # MQA, MQB => MQA
+    # M, V =>
+    # MQC => VFA(4,0,0)
+    # MQD => VFA(4,2,0)
+    # MDA => VFA(4,1,0)
+    # MDB => VFA(4,1,1)
+    # MPA => VFA(16,1,0)
+    # MPB => VFA(16,1,1)
+    # VFA => VFA(6,0,0)
+    # VFB => VFA(6,0,1)
+    # VLA => VFA(12,0,0)
+    # VLB => VFA(12,0,1)
+    # VPA => VFA(16,0,0)
+    # VPB => VFA(16,0,1)
+    # OAA => VFA(9,0,0)
+    # OBA => VFA(4,4,0)
     
 if __name__ == "__main__":
     print (pylibftdi.driver.Driver().list_devices())
@@ -153,6 +211,7 @@ if __name__ == "__main__":
     os.chdir("logs")
 
     with Decimator(log_raw_data=True) as dev:
+        print(dev.serial)
         dev.set_SO_Source(0)
 
         status_bytes = dev.fpga_read_bytes(0, 0x200)
