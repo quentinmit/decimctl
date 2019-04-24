@@ -19,7 +19,7 @@ Bit 7 (0x80): Unknown (used in firmware erase)
 """
 
 from functools import reduce
-from ctypes import BigEndianStructure, c_ubyte, c_ushort, Array
+from ctypes import BigEndianStructure, c_char, c_ubyte, c_ushort, Array
 import enum
 
 def _bit_list_to_bytes(bits):
@@ -64,6 +64,8 @@ def raw_command_to_bytes(data):
                 edge = True
                 command_bits.append(bool(byte & 0x08))
     return command_bits, _bit_list_to_bytes(command_bits)
+
+MAGIC = b'GW'
 
 class Registers(BigEndianStructure):
     _map = {}
@@ -180,7 +182,7 @@ class CPA_Registers(Registers):
     _pack_ = 1
     _fields_ = [
         # 0x00
-        ("magic", c_ubyte * 2),
+        ("magic", c_char * 2),
         ("version_major", c_ushort, 16),
         ("version_minor", c_ushort, 16),
         ("unknown06", c_ubyte * 10),

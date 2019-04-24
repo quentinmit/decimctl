@@ -168,11 +168,50 @@ class Decimator(pylibftdi.device.Device):
     def raw_registers(self):
         return self.fpga_read_bytes(0, 0x200)
 
-    @property
-    def CPA(self):
-        ret = protocol.CPA_Registers.from_buffer_copy(self.raw_registers)
+    def _registers(self, type):
+        ret = type.from_buffer_copy(self.raw_registers)
         ret._device = self
         return ret
+
+    @property
+    def CPA(self):
+        return self._registers(protocol.CPA_Registers)
+
+    @property
+    def registers(self):
+        serial_3 = self.serial[:3]
+        if serial_3 in (b'DHA', b'DHB'):
+            raise NotImplementedError('DHA not supported')
+        elif serial_3 == b'DUC':
+            raise NotImplementedError('DUC not supported')
+        elif serial_3 in (
+                b'CLA', b'LLA',
+                b'CLB', b'LLB',
+                b'CLC', b'LLC',
+                b'CLD', b'LLD',
+                b'CPA', b'LPA',
+                b'CPB', b'LPB',
+                b'CPC', b'LPC',
+                b'CXA', b'LXA',
+                b'CXB', b'LXB',
+        ):
+            return self.CPA
+        elif serial_3 == b'MQS':
+            raise NotImplementedError('MQS not supported')
+        elif serial_3 in (b'MQA', b'MQB'):
+            raise NotImplementedError('MQA not supported')
+        elif serial_3 in (
+                b'MQC', b'MQD',
+                b'MDA', b'MDB',
+                b'MPA', b'MPB',
+                b'VFA', b'VFB',
+                b'VLA', b'VLB',
+                b'VPA', b'VPB',
+                b'OAA', b'OBA',
+        ):
+            raise NotImplementedError('VFA not supported')
+        else:
+            raise NotImplementedError('unrecognized serial prefix %s' % serial_3)
 
     # To identify the type, look at the first 3 characters of the serial number
     # DHA, DHB => DHA
