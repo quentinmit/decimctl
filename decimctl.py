@@ -11,7 +11,7 @@ pylibftdi.driver.USB_PID_LIST = [24576]
 import pylibftdi.device
 pylibftdi.device.USB_VID_LIST = pylibftdi.driver.USB_VID_LIST
 pylibftdi.device.USB_PID_LIST = pylibftdi.device.USB_VID_LIST
-from ctypes import byref, sizeof, cast, c_void_p, pointer, POINTER, Structure, create_string_buffer
+from ctypes import byref, sizeof, cast, c_char_p, c_void_p, pointer, POINTER, Structure, create_string_buffer
 
 import protocol
 
@@ -25,17 +25,21 @@ class ftdi_context(Structure):
     ]
 
 class Decimator(pylibftdi.device.Device):
-    def __init__(self, log_raw_data=False):
+    def __init__(self, log_raw_data=False, serial=None):
         self.log_file = None
         if log_raw_data:
             self.log_file = open("%s.raw" % now(), 'wb')
+        self._requested_serial = serial
         self._serial = create_string_buffer(128)
         self._desc = create_string_buffer(128)
 
         super(Decimator, self).__init__(mode='b')
 
     def _open_device(self):
-        return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), 8543, 24576, None, None, 0)
+        serial = None
+        if self._requested_serial:
+            serial = c_char_p(serial)
+        return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), 8543, 24576, None, serial, 0)
 
     def _get_info(self):
         self.fdll.ftdi_usb_get_strings2.argtypes = self.fdll.ftdi_usb_get_strings.argtypes
