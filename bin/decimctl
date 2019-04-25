@@ -4,6 +4,7 @@ import argparse
 import decimctl
 import os
 import enum
+import struct
 
 def list_devices(args):
     devices = decimctl.list_devices()
@@ -41,6 +42,12 @@ def set(args):
             raise ValueError('unable to parse value as an integer')
     setattr(d.registers, args.name, value)
 
+def auto_int(x):
+    return int(x, 0)
+def int_byte(x):
+    # TODO: Support multiple bytes
+    return struct.pack('>B', int(x, 0))
+
 def main():
     device_parser = argparse.ArgumentParser(add_help=False)
     device_parser.add_argument('--serial', help='serial number of device to control')
@@ -57,8 +64,8 @@ def main():
     parser_registers.set_defaults(func=registers)
 
     parser_set_register = subparsers.add_parser('set_register', parents=[device_parser], help='set raw register value')
-    parser_set_register.add_argument('register', type=int, help='register number to set')
-    parser_set_register.add_argument('value', type=bytes, help='value to set')
+    parser_set_register.add_argument('register', type=auto_int, help='register number to set')
+    parser_set_register.add_argument('value', type=int_byte, help='value to set (123 or 0x1a)')
     parser_set_register.set_defaults(func=set_register)
 
     parser_status = subparsers.add_parser('status', parents=[device_parser], help='show processed device status')
