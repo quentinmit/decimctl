@@ -272,7 +272,7 @@ def CPA_CalcFormatString(locked, standard, fractional, format, threeg_b):
             0x05: "HD 1920x1080i59.94",
         }.get(format, "Unknown")
     elif standard == InputStandard.THREEG_SDI:
-        if threegB == 1:
+        if threeg_b:
             threeg = "3G-B "
         else:
             threeg = "3G-A "
