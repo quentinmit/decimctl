@@ -21,9 +21,9 @@ import datetime
 from struct import pack
 from itertools import chain
 from functools import reduce
+from ctypes import byref, sizeof, cast, c_char_p, c_void_p, pointer, POINTER, Structure, create_string_buffer
 import pylibftdi.driver
 import pylibftdi.device
-from ctypes import byref, sizeof, cast, c_char_p, c_void_p, pointer, POINTER, Structure, create_string_buffer
 
 from . import protocol
 
@@ -269,7 +269,7 @@ class Device(pylibftdi.device.Device):
     # OBA => VFA(4,4,0)
     
 if __name__ == "__main__":
-    print (pylibftdi.driver.Driver().list_devices())
+    print(list_devices())
 
     os.chdir("logs")
 
@@ -279,9 +279,9 @@ if __name__ == "__main__":
 
         status_bytes = dev.raw_registers
         open('%s-status.dat' % now(), 'wb').write(status_bytes)
-        print (status_bytes)
+        print(status_bytes)
 
-        print (dev.CPA)
+        print(dev.CPA)
 
         if False:
             import time

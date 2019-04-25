@@ -36,6 +36,7 @@ from ctypes import BigEndianStructure, c_char, c_ubyte, c_ushort, Array
 import enum
 
 def _bit_list_to_bytes(bits):
+    """Convert a sequence of truthy values into a byte string, MSB first."""
     return bytes(
         reduce(lambda a, b: (a << 1) | b, (int(bool(x)) for x in byte_bits))
         for byte_bits
@@ -43,16 +44,21 @@ def _bit_list_to_bytes(bits):
     )
 
 def raw_response_to_bytes(raw):
+    """
+    Convert data read from the FTDI chip to bytes.
+    This assumes that each bit is represented by four bytes.
+    """
     status_bits = []
     for i in range(0, len(raw), 4):
         if raw[i+2] != raw[i+3]:
-            print ("difference at bit", i)
+            print("difference at bit", i)
+            # TODO: Raise exception?
         status_bits.append(bool(raw[i+2] & 0x8))
     #print (bitstr, b, chr(int(bitstr, 2)))
     return _bit_list_to_bytes(status_bits)
 
-READ_PREAMBLE  = b'\x00\x40\x00\x40\x48\x48\x40\x00'
-WRITE_PREAMBLE = b'\x00\x40\x00\x40\x48\x48\x40\x00'
+READ_PREAMBLE =   b'\x00\x40\x00\x40\x48\x48\x40\x00'
+WRITE_PREAMBLE =  b'\x00\x40\x00\x40\x48\x48\x40\x00'
 WRITE_POSTAMBLE = b'\x00\x40\x48'
 
 def bytes_to_raw_command(command):
@@ -115,7 +121,7 @@ class Registers(BigEndianStructure):
         field = getattr(type(self), name, None)
         if field and not hasattr(self, "_device"):
             raise ValueError("registers not linked to device")
-        super(BigEndianStructure, self).__setattr__(name, value)
+        super(Registers, self).__setattr__(name, value)
         if not field:
             return
         register_start = field.offset
@@ -192,6 +198,8 @@ class LCDOffTime(enum.IntEnum):
     NEVER = 7
 
 class CPA_Registers(Registers):
+    """Register layout of CPA devices (MD-HX, MD-CROSS, MD-LX)."""
+
     _pack_ = 1
     _fields_ = [
         # 0x00
@@ -288,14 +296,3 @@ class CPA_Registers(Registers):
         "DUC_Source": DUC_Source,
         "LCDOffTime": LCDOffTime,
     }
-
-    # def __str__(self):
-    #     out = []
-    #     for field in self._fields_:
-    #         value = getattr(self, field[0])
-    #         value = getattr(value, "value", value)
-    #         if isinstance(value, Array):
-    #             value = list(value)
-    #         out.append("%s: %s" % (field[0], value))
-    #     return "\n".join(out)
-
