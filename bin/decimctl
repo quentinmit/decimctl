@@ -39,6 +39,20 @@ def set_register(args):
 def set(args):
     d = _create_device(args)
     r = d.registers
+    if args.value is None:
+        old = getattr(r, args.name)
+        field = getattr(type(r), args.name)
+        print("Current value: %s" % old)
+        print("Possible values:")
+        if isinstance(old, enum.Enum):
+            for v in list(type(old)):
+                print(v)
+        elif field.size >> 16 == 1:
+            print("0")
+            print("1")
+        else:
+            print("Integer")
+        return
     try:
         value = int(args.value, 0)
     except ValueError:
@@ -80,7 +94,7 @@ def main():
 
     parser_set = subparsers.add_parser('set', parents=[device_parser], help='set a parameter')
     parser_set.add_argument('name', help='parameter name')
-    parser_set.add_argument('value', help='parameter value (integer or string if supported)')
+    parser_set.add_argument('value', nargs='?', help='parameter value (integer or string if supported)')
     parser_set.set_defaults(func=set)
 
     args = parser.parse_args()

@@ -132,6 +132,7 @@ class Registers(BigEndianStructure):
 
 
 class DUCFormat(enum.IntEnum):
+    # TODO: This enum is WRONG!
     SD_720x480i59_94 = 0
     SD_720x576i50 = 1
     HD_1920x1080i60 = 2
@@ -386,7 +387,7 @@ class CPA_Registers(Registers):
     _map = {
         "Input1Standard": InputStandard,
         "Input2Standard": InputStandard,
-        "DUCFormat": DUCFormat,
+        # broken "DUCFormat": DUCFormat,
         "DUC_HF": DUC_HF,
         "HO_Type": HO_Type,
         "SO_Source": SO_Source,
