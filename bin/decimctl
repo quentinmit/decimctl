@@ -2,7 +2,7 @@
 
 import argparse
 import decimctl
-import os
+import sys
 import enum
 import struct
 
@@ -10,7 +10,7 @@ def list_devices(args):
     devices = decimctl.list_devices()
     if not devices:
         print("No devices found")
-        os.exit(1)
+        sys.exit(1)
     for manufacturer, desc, serial in devices:
         print("Model: %s Serial: %s" % (desc, serial))
 
@@ -76,7 +76,7 @@ def main():
     parser = argparse.ArgumentParser(prog='decimctl')
     parser.add_argument('--log_raw_data', action='store_true', help='log raw data to a file in the current directory')
 
-    subparsers = parser.add_subparsers(dest='command', metavar='command', required=True)
+    subparsers = parser.add_subparsers(dest='command', metavar='command')
 
     parser_list = subparsers.add_parser('list', help='list devices')
     parser_list.set_defaults(func=list_devices)
@@ -98,6 +98,9 @@ def main():
     parser_set.set_defaults(func=set)
 
     args = parser.parse_args()
+    if 'func' not in args:
+        parser.print_help()
+        sys.exit(1)
     args.func(args)
 
 if __name__ == '__main__':
