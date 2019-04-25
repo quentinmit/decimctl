@@ -197,6 +197,17 @@ class LCDOffTime(enum.IntEnum):
     OFF_30m = 6
     NEVER = 7
 
+class AudioPair(enum.IntEnum):
+    GROUP_1_PAIR_1 = 0
+    GROUP_1_PAIR_2 = 1
+    GROUP_2_PAIR_1 = 2
+    GROUP_2_PAIR_2 = 3
+    GROUP_3_PAIR_1 = 4
+    GROUP_3_PAIR_2 = 5
+    GROUP_4_PAIR_1 = 6
+    GROUP_4_PAIR_2 = 7
+    OFF = 8
+
 class CPA_Registers(Registers):
     """Register layout of CPA devices (MD-HX, MD-CROSS, MD-LX)."""
 
@@ -295,4 +306,16 @@ class CPA_Registers(Registers):
         "DUC_Ref": DUC_Ref,
         "DUC_Source": DUC_Source,
         "LCDOffTime": LCDOffTime,
+        "HDMI_Pair1": AudioPair,
+        "HDMI_Pair2": AudioPair,
+        "HDMI_Pair3": AudioPair,
+        "HDMI_Pair4": AudioPair,
+        "SDI_Pair1": AudioPair,
+        "SDI_Pair2": AudioPair,
+        "SDI_Pair3": AudioPair,
+        "SDI_Pair4": AudioPair,
+        "SDI_Pair5": AudioPair,
+        "SDI_Pair6": AudioPair,
+        "SDI_Pair7": AudioPair,
+        "SDI_Pair8": AudioPair,
     }
