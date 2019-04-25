@@ -32,7 +32,7 @@ limitations under the License.
 """
 
 from functools import reduce
-from ctypes import BigEndianStructure, c_char, c_ubyte, c_ushort, Array
+from ctypes import BigEndianStructure, c_char, c_ubyte, c_ushort, Array, Union
 import enum
 
 def _bit_list_to_bytes(bits):
@@ -208,6 +208,80 @@ class AudioPair(enum.IntEnum):
     GROUP_4_PAIR_2 = 7
     OFF = 8
 
+# Input*Status contains
+# 0x8000 = Fractional (/1.001)
+# 0x4000 = 3G-B
+# 0x3b00 = Format
+# 0x0003 = {SD, ED, HD, 3G}
+# 0x0004 = Locked
+
+class InputStandard(enum.IntEnum):
+    SD_SDI = 0
+    ED_SDI = 1
+    HD_SDI = 2
+    THREEG_SDI = 3
+
+def CPA_CalcFormatString(locked, standard, fractional, format, threeg_b):
+    #flag1 = ((two << 1)) & 0x6 | ((one >> 7) & 0x1)
+    #threegB = ((one >> 6) & 0x1)
+    #format = one & 0x3f
+    #locked = (two >> 2) & 0x1
+    if locked == 0:
+        return "Unlocked"
+
+    if standard == InputStandard.SD_SDI:
+        if fractional:
+            return "Unknown"
+        return {
+            0: "SD 720x480i59.94",
+            1: "SD 720x576i50",
+            }.get(format, "Unknown")
+    elif standard == InputStandard.ED_SDI:
+        if fractional:
+            return "Unknown"
+        return {
+            0: "ED 720x480p59.95",
+            1: "ED 720x576p50",
+        }.get(format, "Unknown")
+    elif standard == InputStandard.HD_SDI and not fractional:
+        return {
+            0x36: "HD 1280x720p24",
+            0x35: "HD 1280x720p25",
+            0x33: "HD 1280x720p30",
+            0x32: "HD 1280x720p50",
+            0x30: "HD 1280x720p60",
+            0x23: "HD 1920x1080p24",
+            0x22: "HD 1920x1080p25",
+            0x20: "HD 1920x1080p30",
+            0x13: "HD 1920x1080psf24",
+            0x12: "HD 1920x1080psf25",
+            0x10: "HD 1920x1080psf30",
+            0x06: "HD 1920x1080i50",
+            0x04: "HD 1920x1080i60",
+        }.get(format, "Unknown")
+    elif standard == InputStandard.HD_SDI and fractional:
+        return {
+            0x37: "HD 1280x720p23.98",
+            0x34: "HD 1280x720p29.97",
+            0x31: "HD 1280x720p59.94",
+            0x24: "HD 1920x1080p23.98",
+            0x21: "HD 1920x1080p29.97",
+            0x14: "HD 1920x1080psf23.98",
+            0x11: "HD 1920x1080psf29.97",
+            0x05: "HD 1920x1080i59.94",
+        }.get(format, "Unknown")
+    elif standard == InputStandard.THREEG_SDI:
+        if threegB == 1:
+            threeg = "3G-B "
+        else:
+            threeg = "3G-A "
+        return threeg + {
+            0x22: "1920x1080p50",
+            0x21: "1920x1080p59.94", # frac
+            0x20: "1920x1080p60",
+        }.get(format, "Unknown")
+
+
 class CPA_Registers(Registers):
     """Register layout of CPA devices (MD-HX, MD-CROSS, MD-LX)."""
 
@@ -219,7 +293,19 @@ class CPA_Registers(Registers):
         ("version_minor", c_ushort, 16),
         ("unknown06", c_ubyte * 10),
         # 0x10
-        ("unknown10", c_ubyte * 16),
+        ("Input1HDFractional", c_ubyte, 1),
+        ("Input13GB", c_ubyte, 1),
+        ("Input1Format", c_ubyte, 6),
+        ("unknown11", c_ubyte, 5),
+        ("Input1Locked", c_ubyte, 1),
+        ("Input1Standard", c_ubyte, 2),
+        ("Input2HDFractional", c_ubyte, 1),
+        ("Input23GB", c_ubyte, 1),
+        ("Input2Format", c_ubyte, 6),
+        ("unknown11", c_ubyte, 5),
+        ("Input2Locked", c_ubyte, 1),
+        ("Input2Standard", c_ubyte, 2),
+        ("unknown14", c_ubyte * 12),
         # 0x20
         ("PSFINEnable", c_ubyte), # & 0x1
         ("unknown21", c_ubyte),
@@ -298,6 +384,8 @@ class CPA_Registers(Registers):
     ]
 
     _map = {
+        "Input1Standard": InputStandard,
+        "Input2Standard": InputStandard,
         "DUCFormat": DUCFormat,
         "DUC_HF": DUC_HF,
         "HO_Type": HO_Type,
@@ -319,3 +407,11 @@ class CPA_Registers(Registers):
         "SDI_Pair7": AudioPair,
         "SDI_Pair8": AudioPair,
     }
+
+    @property
+    def Input1Status(self):
+        return CPA_CalcFormatString(self.Input1Locked, self.Input1Standard, self.Input1HDFractional, self.Input1Format, self.Input13GB)
+
+    @property
+    def Input2Status(self):
+        return CPA_CalcFormatString(self.Input2Locked, self.Input2Standard, self.Input2HDFractional, self.Input2Format, self.Input23GB)

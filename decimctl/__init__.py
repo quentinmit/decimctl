@@ -24,6 +24,7 @@ from functools import reduce
 from ctypes import byref, sizeof, cast, c_char_p, c_void_p, pointer, POINTER, Structure, create_string_buffer
 import pylibftdi.driver
 import pylibftdi.device
+from enum import Flag
 
 from . import protocol
 
@@ -47,6 +48,68 @@ class ftdi_context(Structure):
         ('usb_ctx', c_void_p),
         ('usb_dev', c_void_p),
     ]
+
+# N.B. enum.auto does not allow combining with int
+def auto(state=[1]):
+    out = state[0]
+    state[0] = out<<1
+    return out
+
+class DeviceType(Flag):
+    DHA = auto()
+    DUC = auto()
+    CPA = auto()
+    CPA_HX = CPA | auto()
+    CPA_HX_V1 = CPA_HX | auto()
+    CPA_HX_V2 = CPA_HX | auto()
+    CPA_CROSS = CPA | auto()
+    CPA_CROSS_V1 = CPA_CROSS | auto()
+    CPA_CROSS_V2 = CPA_CROSS | auto()
+    CPA_CROSS_V3 = CPA_CROSS | auto()
+    CPA_LX = CPA | auto()
+    MQS = auto()
+    MQA = auto()
+    VFA = auto()
+
+_SERIAL_PREFIX_TO_TYPE = {
+    b'DHA': DeviceType.DHA,
+    b'DHB': DeviceType.DHA,
+    b'DUC': DeviceType.DUC,
+    b'CLA': DeviceType.CPA_HX_V1,
+    b'LLA': DeviceType.CPA_HX_V1,
+    b'CLB': DeviceType.CPA_HX_V1,
+    b'LLB': DeviceType.CPA_HX_V1,
+    b'CLC': DeviceType.CPA_HX_V1,
+    b'LLC': DeviceType.CPA_HX_V1,
+    b'CPA': DeviceType.CPA_CROSS_V1,
+    b'LPA': DeviceType.CPA_CROSS_V1,
+    b'CPB': DeviceType.CPA_CROSS_V2,
+    b'LPB': DeviceType.CPA_CROSS_V2,
+    b'CPC': DeviceType.CPA_CROSS_V2,
+    b'LPC': DeviceType.CPA_CROSS_V2,
+    # Nothing for CPA_CROSS_V3 yet?
+    b'CXA': DeviceType.CPA_LX,
+    b'LXA': DeviceType.CPA_LX,
+    b'CXB': DeviceType.CPA_LX,
+    b'LXB': DeviceType.CPA_LX,
+    b'MQS': DeviceType.MQS,
+    b'MQA': DeviceType.MQA,
+    b'MQB': DeviceType.MQA,
+    b'MQC': DeviceType.VFA,
+    b'MQD': DeviceType.VFA,
+    b'MDA': DeviceType.VFA,
+    b'MDB': DeviceType.VFA,
+    b'MPA': DeviceType.VFA,
+    b'MPB': DeviceType.VFA,
+    b'VFA': DeviceType.VFA,
+    b'VFB': DeviceType.VFA,
+    b'VLA': DeviceType.VFA,
+    b'VLB': DeviceType.VFA,
+    b'VPA': DeviceType.VFA,
+    b'VPB': DeviceType.VFA,
+    b'OAA': DeviceType.VFA,
+    b'OBA': DeviceType.VFA,
+}
 
 class Device(pylibftdi.device.Device):
     def __init__(self, log_raw_data=False, serial=None):
@@ -202,40 +265,26 @@ class Device(pylibftdi.device.Device):
         return self._registers(protocol.CPA_Registers)
 
     @property
-    def registers(self):
+    def device_type(self):
         serial_3 = self.serial[:3]
-        if serial_3 in (b'DHA', b'DHB'):
+        return _SERIAL_PREFIX_TO_TYPE.get(serial_3)
+
+    @property
+    def registers(self):
+        if self.device_type & DeviceType.DHA:
             raise NotImplementedError('DHA not supported')
-        elif serial_3 == b'DUC':
+        elif self.device_type & DeviceType.DUC:
             raise NotImplementedError('DUC not supported')
-        elif serial_3 in (
-                b'CLA', b'LLA',
-                b'CLB', b'LLB',
-                b'CLC', b'LLC',
-                b'CLD', b'LLD',
-                b'CPA', b'LPA',
-                b'CPB', b'LPB',
-                b'CPC', b'LPC',
-                b'CXA', b'LXA',
-                b'CXB', b'LXB',
-        ):
+        elif self.device_type & DeviceType.CPA:
             return self.CPA
-        elif serial_3 == b'MQS':
+        elif self.device_type & DeviceType.MQS:
             raise NotImplementedError('MQS not supported')
-        elif serial_3 in (b'MQA', b'MQB'):
+        elif self.device_type & DeviceType.MQA:
             raise NotImplementedError('MQA not supported')
-        elif serial_3 in (
-                b'MQC', b'MQD',
-                b'MDA', b'MDB',
-                b'MPA', b'MPB',
-                b'VFA', b'VFB',
-                b'VLA', b'VLB',
-                b'VPA', b'VPB',
-                b'OAA', b'OBA',
-        ):
+        elif self.device_type & DeviceType.VFA:
             raise NotImplementedError('VFA not supported')
         else:
-            raise NotImplementedError('unrecognized serial prefix %s' % serial_3)
+            raise NotImplementedError('unrecognized serial prefix %s' % self.serial[:3])
 
     # To identify the type, look at the first 3 characters of the serial number
     # DHA, DHB => DHA

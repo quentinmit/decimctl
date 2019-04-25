@@ -23,7 +23,14 @@ def registers(args):
 
 def status(args):
     d = _create_device(args)
-    print(d.registers)
+    print("Model: %s Serial: %s" % (d.desc, d.serial))
+    print("Device type: %s" % (d.device_type))
+    reg = d.registers
+    if hasattr(reg, "Input1Status"):
+        print("Input 1 status: %s" % reg.Input1Status)
+    if hasattr(reg, "Input2Status"):
+        print("Input 2 status: %s" % reg.Input2Status)
+    print(reg)
 
 def set_register(args):
     d = _create_device(args)
