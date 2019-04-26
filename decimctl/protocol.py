@@ -132,28 +132,34 @@ class Registers(BigEndianStructure):
 
 
 class DUCFormat(enum.IntEnum):
-    # TODO: This enum is WRONG!
     SD_720x480i59_94 = 0
     SD_720x576i50 = 1
-    HD_1920x1080i60 = 2
-    HD_1920x1080i59_94 = 3
-    HD_1920x1080i50 = 4
-    HD_1920x1080p30 = 5
-    HD_1920x1080p29_97 = 6
-    HD_1920x1080p25 = 7
-    HD_1920x1080p24 = 8
-    HD_1920x1080p23_98 = 9
-    HD_1280x720p60 = 10
-    HD_1280x720p59_94 = 11
-    HD_1280x720p50 = 12
-    HD_1280x720p30 = 13
-    HD_1280x720p29_97 = 14
-    HD_1280x720p25 = 15
-    HD_1280x720p24 = 16
-    HD_1280x720p23_98 = 17
-    THREEG_1920x1080p60 = 18
-    THREEG_1920x1080p59_94 = 19
-    THREEG_1920x1080p50 = 20
+    ED_720x480p59_94 = 2
+    ED_720x576p50 = 3
+    HD_1920x1080i60 = 4
+    HD_1920x1080i59_94 = 5
+    HD_1920x1080i50 = 6
+    HD_1920x1080psf30 = 7
+    HD_1920x1080psf29_97 = 8
+    HD_1920x1080psf25 = 9
+    HD_1920x1080psf24 = 10
+    HD_1920x1080psf23_98 = 11
+    HD_1920x1080p30 = 12
+    HD_1920x1080p29_97 = 13
+    HD_1920x1080p25 = 14
+    HD_1920x1080p24 = 15
+    HD_1920x1080p23_98 = 16
+    HD_1280x720p60 = 17
+    HD_1280x720p59_94 = 18
+    HD_1280x720p50 = 19
+    HD_1280x720p30 = 20
+    HD_1280x720p29_97 = 21
+    HD_1280x720p25 = 22
+    HD_1280x720p24 = 23
+    HD_1280x720p23_98 = 24
+    THREEG_1920x1080p60 = 25
+    THREEG_1920x1080p59_94 = 26
+    THREEG_1920x1080p50 = 27
 
 class DUC_HF(enum.IntEnum):
     AUTO = 0
@@ -387,7 +393,7 @@ class CPA_Registers(Registers):
     _map = {
         "Input1Standard": InputStandard,
         "Input2Standard": InputStandard,
-        # broken "DUCFormat": DUCFormat,
+        "DUCFormat": DUCFormat,
         "DUC_HF": DUC_HF,
         "HO_Type": HO_Type,
         "SO_Source": SO_Source,
