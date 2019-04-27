@@ -194,14 +194,14 @@ class DUC_Ref(enum.IntEnum):
     SDI_IN = 2
     HDMI_IN = 3
 
-class LCDOffTime(enum.IntEnum):
-    OFF_5s = 0
-    OFF_15s = 1
-    OFF_30s = 2
-    OFF_1m = 3
-    OFF_5m = 4
-    OFF_10m = 5
-    OFF_30m = 6
+class Time(enum.IntEnum):
+    T_5s = 0
+    T_15s = 1
+    T_30s = 2
+    T_1m = 3
+    T_5m = 4
+    T_10m = 5
+    T_30m = 6
     NEVER = 7
 
 class AudioPair(enum.IntEnum):
@@ -400,7 +400,8 @@ class CPA_Registers(Registers):
         "HO_Source": HO_Source,
         "DUC_Ref": DUC_Ref,
         "DUC_Source": DUC_Source,
-        "LCDOffTime": LCDOffTime,
+        "LCDOffTime": Time,
+        "ReturnToStatusTime": Time,
         "HDMI_Pair1": AudioPair,
         "HDMI_Pair2": AudioPair,
         "HDMI_Pair3": AudioPair,

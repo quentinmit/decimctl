@@ -26,6 +26,7 @@ def status(args):
     print("Model: %s Serial: %s" % (d.desc, d.serial))
     print("Device type: %s" % (d.device_type))
     reg = d.registers
+    print("Firmware version: %d.%d" % (reg.version_major, reg.version_minor))
     if hasattr(reg, "Input1Status"):
         print("Input 1 status: %s" % reg.Input1Status)
     if hasattr(reg, "Input2Status"):
