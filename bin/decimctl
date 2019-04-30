@@ -24,6 +24,8 @@ def registers(args):
 def status(args):
     d = _create_device(args)
     print("Model: %s Serial: %s" % (d.desc, d.serial))
+    if d.custom_name:
+        print("Custom name: %s" % (d.custom_name))
     print("Device type: %s" % (d.device_type))
     reg = d.registers
     print("Firmware version: %d.%d" % (reg.version_major, reg.version_minor))

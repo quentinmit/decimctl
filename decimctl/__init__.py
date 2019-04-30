@@ -119,6 +119,7 @@ class Device(pylibftdi.device.Device):
         self._requested_serial = serial
         self._serial = create_string_buffer(128)
         self._desc = create_string_buffer(128)
+        self.custom_name = None
 
         super(Device, self).__init__(mode='b')
 
@@ -135,6 +136,11 @@ class Device(pylibftdi.device.Device):
         self.fdll.libusb_get_device.restype = c_void_p
         usb_dev = self.fdll.libusb_get_device(usb_dev_handle)
         self.ftdi_fn.ftdi_usb_get_strings2(usb_dev, None, 0, self._desc, 127, self._serial, 127)
+
+        eeprom = create_string_buffer(128)
+        self.ftdi_fn.ftdi_read_eeprom()
+        self.ftdi_fn.ftdi_get_eeprom_buf(byref(eeprom), len(eeprom))
+        self.custom_name = create_string_buffer(eeprom[92:92+16]).value
 
     def open(self):
         if self._opened:
