@@ -121,6 +121,12 @@ class Registers(BigEndianStructure):
         field = getattr(type(self), name, None)
         if field and not hasattr(self, "_device"):
             raise ValueError("registers not linked to device")
+        if isinstance(value, bytes):
+            # ctypes does not set the remainder of the byte string to zero.
+            # It also truncates the byte string to the first zero byte, so
+            # write successively smaller strings to clear all the bytes.
+            for i in range(getattr(type(self), name).size-1, 0, -1):
+                super(Registers, self).__setattr__(name, b'x'*i)
         super(Registers, self).__setattr__(name, value)
         if not field:
             return

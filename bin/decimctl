@@ -2,6 +2,7 @@
 
 import argparse
 import decimctl
+import os
 import sys
 import enum
 import struct
@@ -42,8 +43,8 @@ def set_register(args):
 def set(args):
     d = _create_device(args)
     r = d.registers
+    old = getattr(r, args.name)
     if args.value is None:
-        old = getattr(r, args.name)
         field = getattr(type(r), args.name)
         print("Current value: %s" % old)
         print("Possible values:")
@@ -53,17 +54,22 @@ def set(args):
         elif field.size >> 16 == 1:
             print("0")
             print("1")
+        elif isinstance(old, bytes):
+            print("String")
         else:
             print("Integer")
         return
-    try:
-        value = int(args.value, 0)
-    except ValueError:
-        old = getattr(r, args.name)
-        if isinstance(old, enum.Enum):
-            value = type(old)[args.value]
-        else:
-            raise ValueError('unable to parse value as an integer')
+    if isinstance(old, bytes):
+        value = os.fsencode(args.value)
+    else:
+        try:
+            value = int(args.value, 0)
+        except ValueError:
+            old = getattr(r, args.name)
+            if isinstance(old, enum.Enum):
+                value = type(old)[args.value]
+            else:
+                raise ValueError('unable to parse value as an integer')
     setattr(d.registers, args.name, value)
 
 def auto_int(x):
