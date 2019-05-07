@@ -113,7 +113,7 @@ _SERIAL_PREFIX_TO_TYPE = {
     b'MQA': DeviceType.MQA,
     b'MQB': DeviceType.MQA,
     b'MQC': DeviceType.VFA_MQC,
-    b'MQD': DeviceType.VFA_MQD,
+    b'MQD': DeviceType.VFA_MQD, # DMON-QUAD
     b'MDA': DeviceType.VFA_MDA | DeviceType.SECTOR_256K,
     b'MDB': DeviceType.VFA_MDA | DeviceType.SECTOR_4K,
     b'MPA': DeviceType.VFA_MPA | DeviceType.SECTOR_64K,

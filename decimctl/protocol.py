@@ -130,8 +130,15 @@ class Registers(BigEndianStructure):
             length = ((length >> 16) + 7) // 8
         self._device.fpga_write_bytes(register_start, bytes(self)[register_start:register_start+length])
 
+class IntEnum(enum.IntEnum):
+    @classmethod
+    def _missing_(cls, value):
+        pseudo_member = int.__new__(cls)
+        pseudo_member._name_ = "INVALID"
+        pseudo_member._value_ = value
+        return pseudo_member
 
-class DUCFormat(enum.IntEnum):
+class DUCFormat(IntEnum):
     SD_720x480i59_94 = 0
     SD_720x576i50 = 1
     ED_720x480p59_94 = 2
@@ -161,14 +168,14 @@ class DUCFormat(enum.IntEnum):
     THREEG_1920x1080p59_94 = 26
     THREEG_1920x1080p50 = 27
 
-class DUC_HF(enum.IntEnum):
+class DUC_HF(IntEnum):
     AUTO = 0
     NONE = 1
     LOW = 2
     MEDIUM = 3
     HIGH = 4
 
-class HO_Type(enum.IntEnum):
+class HO_Type(IntEnum):
     DVI_RGB_444 = 0
     HDMI_RGB_444_2ch = 1
     HDMI_YCbCr_444_2ch = 2
@@ -177,24 +184,24 @@ class HO_Type(enum.IntEnum):
     HDMI_YCbCr_444_8ch = 5
     HDMI_YCbCr_422_8ch = 6
 
-class SO_Source(enum.IntEnum):
+class SO_Source(IntEnum):
     SDI_IN = 0
     HDMI_IN = 1
     DUC = 2
 
 HO_Source = SO_Source
 
-class DUC_Source(enum.IntEnum):
+class DUC_Source(IntEnum):
     SDI_IN = 0
     HDMI_IN = 1
 
-class DUC_Ref(enum.IntEnum):
+class DUC_Ref(IntEnum):
     Source = 0
     Free_Run = 1
     SDI_IN = 2
     HDMI_IN = 3
 
-class Time(enum.IntEnum):
+class Time(IntEnum):
     T_5s = 0
     T_15s = 1
     T_30s = 2
@@ -204,7 +211,7 @@ class Time(enum.IntEnum):
     T_30m = 6
     NEVER = 7
 
-class AudioPair(enum.IntEnum):
+class AudioPair(IntEnum):
     GROUP_1_PAIR_1 = 0
     GROUP_1_PAIR_2 = 1
     GROUP_2_PAIR_1 = 2
@@ -222,7 +229,7 @@ class AudioPair(enum.IntEnum):
 # 0x0003 = {SD, ED, HD, 3G}
 # 0x0004 = Locked
 
-class InputStandard(enum.IntEnum):
+class InputStandard(IntEnum):
     SD_SDI = 0
     ED_SDI = 1
     HD_SDI = 2
@@ -424,12 +431,37 @@ class CPA_Registers(Registers):
     def Input2Status(self):
         return CPA_CalcFormatString(self.Input2Locked, self.Input2Standard, self.Input2HDFractional, self.Input2Format, self.Input23GB)
 
-class MVReference(enum.IntEnum):
+class MVReference(IntEnum):
     FREE_RUN = 0
     WINDOW_1 = 1
     WINDOW_2 = 3
     WINDOW_3 = 5
     WINDOW_4 = 7
+
+class MVAudioSource(IntEnum):
+    WINDOW_1 = 0
+    WINDOW_2 = 1
+    WINDOW_3 = 2
+    WINDOW_4 = 3
+    WINDOW_5 = 4
+    WINDOW_6 = 5
+
+class VFA_HO_Source(IntEnum):
+    INPUT_1 = 0
+    INPUT_2 = 1
+    INPUT_3 = 2
+    INPUT_4 = 3
+    MULTI_VIEW = 4
+
+class OSEnable(IntEnum):
+    OFF = 0
+    SHOW_5s = 1
+    SHOW_ALWAYS = 2
+
+class UMDs_Justify(IntEnum):
+    CENTRE = 0
+    LEFT = 1
+    RIGHT = 2
 
 class VFA_Registers(Registers):
     """Register layout of VFA devices (DMON-QUAD, etc.)."""
@@ -444,14 +476,132 @@ class VFA_Registers(Registers):
         # 0x10
         ("unknown10", c_ubyte * 16),
         # 0x20
-        ("unknown20", c_ubyte * 16),
+        # HO1-4 are used by MDA
+        ("unknown20", c_ubyte, 2),
+        ("HO1_Type", c_ubyte, 3),
+        ("HO1_Source", c_ubyte, 3),
+        ("unknown21", c_ubyte, 2),
+        ("HO2_Type", c_ubyte, 3),
+        ("HO2_Source", c_ubyte, 3),
+        ("unknown22", c_ubyte, 2),
+        ("HO3_Type", c_ubyte, 3),
+        ("HO3_Source", c_ubyte, 3),
+        ("unknown23", c_ubyte, 2),
+        ("HO4_Type", c_ubyte, 3),
+        ("HO4_Source", c_ubyte, 3),
+        ("unknown24", c_ubyte, 6),
+        ("LP4_EN", c_ubyte, 1), # & 0x2
+        ("LP2_EN", c_ubyte, 1), # & 0x1
+        ("unknown25", c_ubyte * 11),
         # 0x30
-        ("unknown30", c_ubyte * 3),
+        # HO_Type on all types except OAA, OBA
+        ("HO_Type", c_ubyte), # & 0x7
+        ("OutputSelect", c_ubyte, 7), # & 0xf
+        ("OutputMultiViewer", c_ubyte, 1), # & 0x1
+        ("MVFormat", c_ubyte), # & 0x1f
         ("MVReference", c_ubyte), # & 0x7. 1 -> 1, 3 -> 2, 5 -> 3, 7 -> 4, else 0
-        ("unknown34", c_ubyte * 2),
+        ("FSScaled", c_ubyte), # & 0x1
+        ("NumWindows", c_ubyte), # & 0xf
         ("MVLayout", c_ubyte), # & 0x1f
+        ("OSAudioSourceIDEnable", c_ubyte, 4), # & 0x3
+        ("MVAudioSource", c_ubyte, 4), # & 0xf
+        ("unknown38", c_ubyte * 8),
+        # 0x40
+        # Addresses on all types except MDA, MPA (up to type window limit)
+        ("UMDs_W1_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W2_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W3_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W4_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W5_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W6_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W7_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W8_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W9_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W10_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W11_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W12_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W13_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W14_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W15_TSL_Address", c_ubyte), # & 0x7f
+        ("UMDs_W16_TSL_Address", c_ubyte), # & 0x7f
+        # 0x50
+        ("OSINFormatEnable", c_ubyte), # & 0x3
+        ("OSFormatForeground", c_ubyte), # & 0x1f
+        ("OSFormatBackground", c_ubyte), # & 0x1f
+        ("unknown53", c_ubyte),
+        ("Background", c_ubyte), # & 0x7
+        ("BorderColour", c_ubyte), # & 0x7
+        ("GPIConfig", c_ubyte), # & 0x3
+        ("ApplyTallyTo", c_ubyte), # & 0x3
+        ("OUT_3G_B", c_ubyte), # & 0x1
+        ("unknown59", c_ubyte),
+        ("LCDOffTime", c_ubyte), # & 0x7
+        ("ReturnToStatusTime", c_ubyte), # & 0x7
+        ("DemoCycleType", c_ubyte), # & 0x7
+        ("DemoCycleTime", c_ubyte),
+        ("AutoSave", c_ubyte), # & 0x1
+        ("unknown5f", c_ubyte),
+        # 0x60
+        ("UMDForeground", c_ubyte), # & 0x1f
+        ("UMDBackground", c_ubyte), # & 0x1f
+        ("UMDs_Justify", c_ubyte), # & 0x3
+        ("UMDs_W8_Enable", c_ubyte, 1),
+        ("UMDs_W7_Enable", c_ubyte, 1),
+        ("UMDs_W6_Enable", c_ubyte, 1),
+        ("UMDs_W5_Enable", c_ubyte, 1),
+        ("UMDs_W4_Enable", c_ubyte, 1),
+        ("UMDs_W3_Enable", c_ubyte, 1),
+        ("UMDs_W2_Enable", c_ubyte, 1),
+        ("UMDs_W1_Enable", c_ubyte, 1),
+        ("UMDs_W16_Enable", c_ubyte, 1),
+        ("UMDs_W15_Enable", c_ubyte, 1),
+        ("UMDs_W14_Enable", c_ubyte, 1),
+        ("UMDs_W13_Enable", c_ubyte, 1),
+        ("UMDs_W12_Enable", c_ubyte, 1),
+        ("UMDs_W11_Enable", c_ubyte, 1),
+        ("UMDs_W10_Enable", c_ubyte, 1),
+        ("UMDs_W9_Enable", c_ubyte, 1),
+        ("unknown65", c_ubyte * 10),
+        ("TallyTransparency", c_ubyte), # & 0x3
+        # 0x70
+        ("unknown70", c_ubyte * 16),
+        ("unknown80", c_ubyte * 16),
+        ("unknown90", c_ubyte * 16),
+        ("unknowna0", c_ubyte * 16),
+        ("unknownb0", c_ubyte * 16),
+        ("unknownc0", c_ubyte * 16),
+        ("unknownd0", c_ubyte * 16),
+        ("unknowne0", c_ubyte * 16),
+        ("unknownf0", c_ubyte * 16),
+        # 0x100
+        ("UMD_W1", c_char * 0x10),
+        ("UMD_W2", c_char * 0x10),
+        ("UMD_W3", c_char * 0x10),
+        ("UMD_W4", c_char * 0x10),
+        ("UMD_W5", c_char * 0x10),
+        ("UMD_W6", c_char * 0x10),
+        ("UMD_W7", c_char * 0x10),
+        ("UMD_W8", c_char * 0x10),
+        ("UMD_W9", c_char * 0x10),
+        ("UMD_W10", c_char * 0x10),
+        ("UMD_W11", c_char * 0x10),
+        ("UMD_W12", c_char * 0x10),
+        ("UMD_W13", c_char * 0x10),
+        ("UMD_W14", c_char * 0x10),
+        ("UMD_W15", c_char * 0x10),
+        ("UMD_W16", c_char * 0x10),
     ]
 
-    _map_ = {
+    _map = {
         "MVReference": MVReference,
+        "MVAudioSource": MVAudioSource,
+        "OSAudioSourceIDEnable": OSEnable,
+        "OSINFormatEnable": OSEnable,
+        "UMDs_Justify": UMDs_Justify,
+        "HO1_Source": VFA_HO_Source,
+        "HO2_Source": VFA_HO_Source,
+        "HO3_Source": VFA_HO_Source,
+        "HO4_Source": VFA_HO_Source,
+        "LCDOffTime": Time,
+        "ReturnToStatusTime": Time,
     }
