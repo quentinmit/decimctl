@@ -70,6 +70,23 @@ class DeviceType(Flag):
     MQS = auto()
     MQA = auto()
     VFA = auto()
+    SECTOR_4K = auto()
+    SECTOR_64K = auto()
+    SECTOR_256K = auto()
+    # SECTOR_4K if ??B, SECTOR_64K if ??A
+    VFA_VFA = VFA | auto() # 0x6 windows
+    VFA_VLA = VFA | auto() # 0xc windows
+    VFA_MPA = VFA | auto() # 0x10 windows
+    VFA_VPA = VFA | auto() # 0x10 windows
+    # SECTOR_4K if MDB, SECTOR_256K if MDA
+    VFA_MDA = VFA | auto() # 0x4 windows
+
+    VFA_MQC = VFA | SECTOR_64K | auto() # 0x4 windows
+    VFA_MQD = VFA | SECTOR_4K | auto() # 0x4 windows, DMON-QUAD
+    VFA_VHA = VFA | SECTOR_4K | auto() # 0x4 windows
+    VFA_OAA = VFA | SECTOR_4K | auto() # 0x9 windows
+    VFA_OBA = VFA | SECTOR_4K | auto() # 0x4 windows
+
 
 _SERIAL_PREFIX_TO_TYPE = {
     b'DHA': DeviceType.DHA,
@@ -95,20 +112,20 @@ _SERIAL_PREFIX_TO_TYPE = {
     b'MQS': DeviceType.MQS,
     b'MQA': DeviceType.MQA,
     b'MQB': DeviceType.MQA,
-    b'MQC': DeviceType.VFA,
-    b'MQD': DeviceType.VFA,
-    b'MDA': DeviceType.VFA,
-    b'MDB': DeviceType.VFA,
-    b'MPA': DeviceType.VFA,
-    b'MPB': DeviceType.VFA,
-    b'VFA': DeviceType.VFA,
-    b'VFB': DeviceType.VFA,
-    b'VLA': DeviceType.VFA,
-    b'VLB': DeviceType.VFA,
-    b'VPA': DeviceType.VFA,
-    b'VPB': DeviceType.VFA,
-    b'OAA': DeviceType.VFA,
-    b'OBA': DeviceType.VFA,
+    b'MQC': DeviceType.VFA_MQC,
+    b'MQD': DeviceType.VFA_MQD,
+    b'MDA': DeviceType.VFA_MDA | DeviceType.SECTOR_256K,
+    b'MDB': DeviceType.VFA_MDA | DeviceType.SECTOR_4K,
+    b'MPA': DeviceType.VFA_MPA | DeviceType.SECTOR_64K,
+    b'MPB': DeviceType.VFA_MPA | DeviceType.SECTOR_4K,
+    b'VFA': DeviceType.VFA_VFA | DeviceType.SECTOR_64K,
+    b'VFB': DeviceType.VFA_VFA | DeviceType.SECTOR_4K,
+    b'VLA': DeviceType.VFA_VLA | DeviceType.SECTOR_64K,
+    b'VLB': DeviceType.VFA_VLA | DeviceType.SECTOR_4K,
+    b'VPA': DeviceType.VFA_VPA | DeviceType.SECTOR_64K,
+    b'VPB': DeviceType.VFA_VPA | DeviceType.SECTOR_4K,
+    b'OAA': DeviceType.VFA_OAA,
+    b'OBA': DeviceType.VFA_OBA,
 }
 
 class Device(pylibftdi.device.Device):
