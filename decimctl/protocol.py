@@ -423,3 +423,35 @@ class CPA_Registers(Registers):
     @property
     def Input2Status(self):
         return CPA_CalcFormatString(self.Input2Locked, self.Input2Standard, self.Input2HDFractional, self.Input2Format, self.Input23GB)
+
+class MVReference(enum.IntEnum):
+    FREE_RUN = 0
+    WINDOW_1 = 1
+    WINDOW_2 = 3
+    WINDOW_3 = 5
+    WINDOW_4 = 7
+
+class VFA_Registers(Registers):
+    """Register layout of VFA devices (DMON-QUAD, etc.)."""
+
+    _pack_ = 1
+    _fields_ = [
+        # 0x00
+        ("magic", c_char * 2),
+        ("version_major", c_ushort, 16),
+        ("version_minor", c_ushort, 16),
+        ("unknown06", c_ubyte * 10),
+        # 0x10
+        ("unknown10", c_ubyte * 16),
+        # 0x20
+        ("unknown20", c_ubyte * 16),
+        # 0x30
+        ("unknown30", c_ubyte * 3),
+        ("MVReference", c_ubyte), # & 0x7. 1 -> 1, 3 -> 2, 5 -> 3, 7 -> 4, else 0
+        ("unknown34", c_ubyte * 2),
+        ("MVLayout", c_ubyte), # & 0x1f
+    ]
+
+    _map_ = {
+        "MVReference": MVReference,
+    }

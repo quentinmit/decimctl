@@ -288,6 +288,10 @@ class Device(pylibftdi.device.Device):
         return self._registers(protocol.CPA_Registers)
 
     @property
+    def VFA(self):
+        return self._registers(protocol.VFA_Registers)
+
+    @property
     def device_type(self):
         serial_3 = self.serial[:3]
         return _SERIAL_PREFIX_TO_TYPE.get(serial_3)
@@ -305,7 +309,7 @@ class Device(pylibftdi.device.Device):
         elif self.device_type & DeviceType.MQA:
             raise NotImplementedError('MQA not supported')
         elif self.device_type & DeviceType.VFA:
-            raise NotImplementedError('VFA not supported')
+            return self.VFA
         else:
             raise NotImplementedError('unrecognized serial prefix %s' % self.serial[:3])
 
