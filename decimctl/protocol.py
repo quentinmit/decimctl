@@ -511,7 +511,22 @@ class VFA_Registers(Registers):
         ("MVLayout", c_ubyte), # & 0x1f
         ("OSAudioSourceIDEnable", c_ubyte, 4), # & 0x3
         ("MVAudioSource", c_ubyte, 4), # & 0xf
-        ("unknown38", c_ubyte * 8),
+        ("VS2", c_ubyte, 4), # & 0xf0
+        ("VS1", c_ubyte, 4), # & 0xf
+        ("VS4", c_ubyte, 4), # & 0xf0
+        ("VS3", c_ubyte, 4), # & 0xf
+        ("VS6", c_ubyte, 4), # & 0xf0
+        ("VS5", c_ubyte, 4), # & 0xf
+        ("VS8", c_ubyte, 4), # & 0xf0
+        ("VS7", c_ubyte, 4), # & 0xf
+        ("VS10", c_ubyte, 4), # & 0xf0
+        ("VS9", c_ubyte, 4), # & 0xf
+        ("VS12", c_ubyte, 4), # & 0xf0
+        ("VS11", c_ubyte, 4), # & 0xf
+        ("VS14", c_ubyte, 4), # & 0xf0
+        ("VS13", c_ubyte, 4), # & 0xf
+        ("VS16", c_ubyte, 4), # & 0xf0
+        ("VS15", c_ubyte, 4), # & 0xf
         # 0x40
         # Addresses on all types except MDA, MPA (up to type window limit)
         ("UMDs_W1_TSL_Address", c_ubyte), # & 0x7f
