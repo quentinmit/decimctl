@@ -632,6 +632,65 @@ class Genlock(IntEnum):
     IF_PRESENT = 1
     ALWAYS = 2
 
+class KPADUCFormat(IntEnum):
+    SD_720x480i59_94 = 0
+    SD_720x576i50 = 1
+    ED_720x480p59_94 = 2
+    ED_720x576p50 = 3
+    HD_1280x720p60 = 4
+    HD_1280x720p59_94 = 5
+    HD_1280x720p50 = 6
+    HD_1280x720p30 = 7
+    HD_1280x720p29_97 = 8
+    HD_1280x720p25 = 9
+    HD_1280x720p24 = 10
+    HD_1280x720p23_98 = 11
+    HD_1920x1080i60 = 12
+    HD_1920x1080i59_94 = 13
+    HD_1920x1080i50 = 14
+    HD_1920x1080psf30 = 15
+    HD_1920x1080psf29_97 = 16
+    HD_1920x1080psf25 = 17
+    HD_1920x1080psf24 = 18
+    HD_1920x1080psf23_98 = 19
+    HD_1920x1080p30 = 20
+    HD_1920x1080p29_97 = 21
+    HD_1920x1080p25 = 22
+    HD_1920x1080p24 = 23
+    HD_1920x1080p23_98 = 24
+    HD_2Kpsf30 = 25
+    HD_2Kpsf29_97 = 26
+    HD_2Kpsf25 = 27
+    HD_2Kpsf24 = 28
+    HD_2Kpsf23_98 = 29
+    HD_2Kp30 = 30
+    HD_2Kp29_97 = 31
+    HD_2Kp25 = 32
+    HD_2Kp24 = 33
+    HD_2Kp23_98 = 34
+    THREEG_1920x1080p60 = 35
+    THREEG_1920x1080p59_94 = 36
+    THREEG_1920x1080p50 = 37
+    THREEG_2Kp60 = 38
+    THREEG_2Kp59_94 = 39
+    THREEG_2Kp50 = 40
+    SIXG_2160p30 = 41
+    SIXG_2160p29_97 = 42
+    SIXG_2160p25 = 43
+    SIXG_2160p24 = 44
+    SIXG_2160p23_98 = 45
+    SIXG_4Kp30 = 46
+    SIXG_4Kp29_97 = 47
+    SIXG_4Kp25 = 48
+    SIXG_4Kp24 = 49
+    SIXG_4Kp23_98 = 50
+    TWELVEG_2160p60 = 51
+    TWELVEG_2160p59_94 = 52
+    TWELVEG_2160p50 = 53
+    TWELVEG_4Kp60 = 54
+    TWELVEG_4Kp59_94 = 55
+    TWELVEG_4Kp50 = 56
+
 class KPAAudioPair(IntEnum):
     GROUP_1_PAIR_1 = 0
     GROUP_1_PAIR_2 = 1
@@ -642,6 +701,64 @@ class KPAAudioPair(IntEnum):
     GROUP_4_PAIR_1 = 6
     GROUP_4_PAIR_2 = 7
     OFF = 15
+
+class KPADUC_HF(IntEnum):
+    AUTO = 0
+    NONE = 4
+    LOW = 5
+    MEDIUM = 6
+    HIGH = 7
+
+class SDAspect(IntEnum):
+    ASPECT_4_3 = 0
+    ASPECT_14_9 = 1
+    ASPECT_16_9 = 2
+
+class InputImageAspect(IntEnum):
+    INPUT = 0
+    ASPECT_4_3 = 1
+    ASPECT_14_9 = 2
+    ASPECT_16_9 = 3
+    ASPECT_256_135 = 4
+    ASPECT_64_87 = 5
+    ASPECT_3_4 = 6
+    ASPECT_1_1 = 7
+    ASPECT_5_4 = 8
+    ASPECT_32_25 = 9
+    ASPECT_192_145 = 10
+    ASPECT_296_221 = 11
+    ASPECT_960_617 = 12
+    ASPECT_467_300 = 13
+    ASPECT_51_32 = 14
+    ASPECT_307_192 = 15
+    ASPECT_8_5 = 16
+    ASPECT_5_3 = 17
+    ASPECT_53_30 = 18
+    ASPECT_85_48 = 19
+    ASPECT_133_75 = 20
+    ASPECT_71_40 = 21
+    ASPECT_932_525 = 22
+    ASPECT_341_192 = 23
+    ASPECT_683_384 = 24
+    ASPECT_9_5 = 25
+    ASPECT_64_35 = 26
+    ASPECT_72_35 = 27
+
+class OutputImageAspect(IntEnum):
+    FIT = 0
+    FILL_CENTER = 1
+    FILL_RIGHT_BOTTOM_CUT = 2
+    FILL_LEFT_TOP_CUT = 3
+    STRETCH = 4
+
+class ColorSpace(IntEnum):
+    REC_709 = 0
+    REC_2020 = 1
+
+class VESAColorSpace(IntEnum):
+    REC_601 = 0
+    REC_709 = 1
+    REC_2020 = 2
 
 class KPA_Registers(Registers):
     """Register layout of KPA devices (12G-CROSS, etc.)."""
@@ -656,9 +773,43 @@ class KPA_Registers(Registers):
         # 0x10
         ("unknown10", c_ubyte * 16),
         # 0x20
-        ("unknown20", c_ubyte * 16),
+        ("unknown20b", c_ubyte, 1), # unknown sample 2
+        ("SI_CS_UD_Always", c_ubyte, 1),
+        ("SI_CS_3G_Always", c_ubyte, 1),
+        ("unknown20", c_ubyte, 2),
+        ("SI_CS_UD", c_ubyte, 1),
+        ("SI_CS_3G", c_ubyte, 1),
+        ("PSFINEnable", c_ubyte, 1), # & 0x1
+        ("unknown21", c_ubyte, 1),
+        ("HI_CS_VESA_Always", c_ubyte, 1),
+        ("HI_CS_UD_Always", c_ubyte, 1),
+        ("HI_CS_3G_Always", c_ubyte, 1),
+        ("HI_CS_VESA", c_ubyte, 2),
+        ("HI_CS_UD", c_ubyte, 1),
+        ("HI_CS_3G", c_ubyte, 1),
+        ("DUCFormat", c_ubyte), # 0x22 & 0x1f
+        ("Aspect_SD_Input", c_ubyte), # & 0x1f
+        ("Aspect_SD_Output", c_ubyte), # & 0x1f
+        ("Aspect_Image_Output", c_ubyte, 3),
+        ("Aspect_Image_Input", c_ubyte, 5),
+        ("unknown26", c_ubyte),
+        ("unknown27", c_ubyte, 5),
+        ("DUC_MOT_DET_LEVEL", c_ushort, 11), # & 0x3FF
+        ("unknown29", c_ubyte),
+        ("unknownDUC_HF", c_ubyte, 5),
+        ("DUC_HF", c_ubyte, 3), # & 0x7
+        ("Loop_Enable", c_ubyte), # 0x2b
+        ("OUT_3G_B", c_ubyte), # & 0x1
+        ("unknown2d", c_ubyte, 6),
+        ("DUC_V_FLIP_EN", c_ubyte, 1), # & 0x2
+        ("DUC_H_FLIP_EN", c_ubyte, 1), # & 0x1
+        ("unknown2e", c_ubyte),
+        ("AutoSave", c_ubyte),
         # 0x30
-        ("HO_Type", c_ubyte), # & 0x7 # unknown
+        ("unknown30", c_ubyte, 2),
+        ("HO_YCbCr_Full", c_ubyte, 1),
+        ("HO_RGB_Full", c_ubyte, 1),
+        ("HO_Type", c_ubyte, 4), # & 0x7 # unknown
         ("SO_Source", c_ubyte), # & 0x3
         ("HO_Source", c_ubyte), # & 0x3
         ("unknownDUC", c_ubyte, 3),
@@ -687,8 +838,17 @@ class KPA_Registers(Registers):
     _map = {
         "Input1Standard": InputStandard, # unknown
         "Input2Standard": InputStandard, # unknown
-        "DUCFormat": DUCFormat, # unknown
-        "DUC_HF": DUC_HF, # unknown
+        "DUCFormat": KPADUCFormat,
+        "DUC_HF": KPADUC_HF, # unknown
+        "SI_CS_3G": ColorSpace,
+        "SI_CS_UD": ColorSpace,
+        "HI_CS_VESA": VESAColorSpace,
+        "HI_CS_UD": ColorSpace,
+        "HI_CS_3G": ColorSpace,
+        "Aspect_SD_Input": SDAspect,
+        "Aspect_SD_Output": SDAspect,
+        "Aspect_Image_Output": OutputImageAspect,
+        "Aspect_Image_Input": InputImageAspect,
         "HO_Type": HO_Type, # unknown
         "SO_Source": SO_Source, # works
         "HO_Source": HO_Source, # works
