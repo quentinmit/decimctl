@@ -70,6 +70,7 @@ class DeviceType(Flag):
     MQS = auto()
     MQA = auto()
     VFA = auto()
+    KPA = auto()
     SECTOR_4K = auto()
     SECTOR_64K = auto()
     SECTOR_256K = auto()
@@ -126,6 +127,7 @@ _SERIAL_PREFIX_TO_TYPE = {
     b'VPB': DeviceType.VFA_VPA | DeviceType.SECTOR_4K,
     b'OAA': DeviceType.VFA_OAA,
     b'OBA': DeviceType.VFA_OBA,
+    b'KPA': DeviceType.KPA,
 }
 
 class Device(pylibftdi.device.Device):
@@ -292,6 +294,10 @@ class Device(pylibftdi.device.Device):
         return self._registers(protocol.VFA_Registers)
 
     @property
+    def KPA(self):
+        return self._registers(protocol.KPA_Registers)
+
+    @property
     def device_type(self):
         serial_3 = self.serial[:3]
         return _SERIAL_PREFIX_TO_TYPE.get(serial_3)
@@ -310,6 +316,8 @@ class Device(pylibftdi.device.Device):
             raise NotImplementedError('MQA not supported')
         elif self.device_type & DeviceType.VFA:
             return self.VFA
+        elif self.device_type & DeviceType.KPA:
+            return self.KPA
         else:
             raise NotImplementedError('unrecognized serial prefix %s' % self.serial[:3])
 

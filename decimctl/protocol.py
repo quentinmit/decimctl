@@ -626,3 +626,87 @@ class VFA_Registers(Registers):
         "LCDOffTime": Time,
         "ReturnToStatusTime": Time,
     }
+
+class Genlock(IntEnum):
+    NO = 0
+    IF_PRESENT = 1
+    ALWAYS = 2
+
+class KPAAudioPair(IntEnum):
+    GROUP_1_PAIR_1 = 0
+    GROUP_1_PAIR_2 = 1
+    GROUP_2_PAIR_1 = 2
+    GROUP_2_PAIR_2 = 3
+    GROUP_3_PAIR_1 = 4
+    GROUP_3_PAIR_2 = 5
+    GROUP_4_PAIR_1 = 6
+    GROUP_4_PAIR_2 = 7
+    OFF = 15
+
+class KPA_Registers(Registers):
+    """Register layout of KPA devices (12G-CROSS, etc.)."""
+
+    __pack__ = 1
+    _fields_ = [
+        # 0x00
+        ("magic", c_char * 2),
+        ("version_major", c_ushort, 16),
+        ("version_minor", c_ushort, 16),
+        ("unknown06", c_ubyte * 10),
+        # 0x10
+        ("unknown10", c_ubyte * 16),
+        # 0x20
+        ("unknown20", c_ubyte * 16),
+        # 0x30
+        ("HO_Type", c_ubyte), # & 0x7 # unknown
+        ("SO_Source", c_ubyte), # & 0x3
+        ("HO_Source", c_ubyte), # & 0x3
+        ("unknownDUC", c_ubyte, 3),
+        ("Genlock", c_ubyte, 2), # & 0x3
+        ("DUC_Ref", c_ubyte, 2), # & 0x3
+        ("DUC_Source", c_ubyte, 1), # & 0x1
+        ("unknown34", c_ubyte), # & 0x3
+        ("LCDOffTime", c_ubyte), # 5s, 15s, 30s, 1m, 5m, 10m, 30m, NEVER
+        ("ReturnToStatusTime", c_ubyte), # & 0x7
+        ("unknown37", c_ubyte), # & 0x3
+        ("HDMI_Pair2", c_ubyte, 4),
+        ("HDMI_Pair1", c_ubyte, 4),
+        ("HDMI_Pair4", c_ubyte, 4),
+        ("HDMI_Pair3", c_ubyte, 4),
+        ("SDI_Pair2", c_ubyte, 4), # & 0xf
+        ("SDI_Pair1", c_ubyte, 4), # & 0xf0
+        ("SDI_Pair4", c_ubyte, 4),
+        ("SDI_Pair3", c_ubyte, 4),
+        ("SDI_Pair6", c_ubyte, 4),
+        ("SDI_Pair5", c_ubyte, 4),
+        ("SDI_Pair8", c_ubyte, 4),
+        ("SDI_Pair7", c_ubyte, 4),
+        ("unknown3e", c_ubyte * 2),
+    ]
+
+    _map = {
+        "Input1Standard": InputStandard, # unknown
+        "Input2Standard": InputStandard, # unknown
+        "DUCFormat": DUCFormat, # unknown
+        "DUC_HF": DUC_HF, # unknown
+        "HO_Type": HO_Type, # unknown
+        "SO_Source": SO_Source, # works
+        "HO_Source": HO_Source, # works
+        "DUC_Ref": DUC_Ref, # works
+        "DUC_Source": DUC_Source, # works
+        "Genlock": Genlock, # works
+        "LCDOffTime": Time, # works
+        "ReturnToStatusTime": Time, # works
+        "HDMI_Pair1": KPAAudioPair,
+        "HDMI_Pair2": KPAAudioPair,
+        "HDMI_Pair3": KPAAudioPair,
+        "HDMI_Pair4": KPAAudioPair,
+        "SDI_Pair1": KPAAudioPair,
+        "SDI_Pair2": KPAAudioPair,
+        "SDI_Pair3": KPAAudioPair,
+        "SDI_Pair4": KPAAudioPair,
+        "SDI_Pair5": KPAAudioPair,
+        "SDI_Pair6": KPAAudioPair,
+        "SDI_Pair7": KPAAudioPair,
+        "SDI_Pair8": KPAAudioPair,
+    }
