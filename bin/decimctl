@@ -34,6 +34,8 @@ def status(args):
         print("Input 1 status: %s" % reg.Input1Status)
     if hasattr(reg, "Input2Status"):
         print("Input 2 status: %s" % reg.Input2Status)
+    if hasattr(reg, "Input3Status"):
+        print("Input 3 status: %s" % reg.Input3Status)
     print(reg)
 
 def set_register(args):
