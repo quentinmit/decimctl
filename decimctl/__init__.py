@@ -36,6 +36,13 @@ pylibftdi.driver.USB_VID_LIST = [VID]
 pylibftdi.driver.USB_PID_LIST = [PID]
 pylibftdi.device.USB_VID_LIST = pylibftdi.driver.USB_VID_LIST
 pylibftdi.device.USB_PID_LIST = pylibftdi.driver.USB_PID_LIST
+pylibftdi.device.ERR_HELP_NOT_FOUND_FAIL = """
+No device could be found. Is the device connected?
+
+Try running the following command to see if the device is listed:
+
+    decimctl list
+"""
 
 def now():
     return datetime.datetime.now().isoformat()
@@ -145,7 +152,7 @@ class Device(pylibftdi.device.Device):
     def _open_device(self):
         serial = None
         if self._requested_serial:
-            serial = c_char_p(serial)
+            serial = c_char_p(self._requested_serial.encode('ascii'))
         return self.fdll.ftdi_usb_open_desc_index(byref(self.ctx), VID, PID, None, serial, 0)
 
     def _get_info(self):
