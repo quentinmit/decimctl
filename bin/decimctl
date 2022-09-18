@@ -72,7 +72,8 @@ def set(args):
     else:
         # 'set' with just a name -- display its currently set value
         if args.value is None:
-            field = getattr(type(r), input_name)
+            old = getattr(r, args.name)
+            field = getattr(type(r), args.name)
             print("Current value: %s" % old)
             print("Possible values:")
             if isinstance(old, enum.Enum):
