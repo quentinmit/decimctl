@@ -45,34 +45,52 @@ def set_register(args):
 def set(args):
     d = _create_device(args)
     r = d.registers
-    old = getattr(r, args.name)
-    if args.value is None:
-        field = getattr(type(r), args.name)
-        print("Current value: %s" % old)
-        print("Possible values:")
-        if isinstance(old, enum.Enum):
-            for v in list(type(old)):
-                print(v)
-        elif field.size >> 16 == 1:
-            print("0")
-            print("1")
-        elif isinstance(old, bytes):
-            print("String")
+
+    def _parse_value(input_name, input_value):
+        old = getattr(r, input_name)
+        if isinstance(old, bytes):
+            value = os.fsencode(input_value)
         else:
-            print("Integer")
-        return
-    if isinstance(old, bytes):
-        value = os.fsencode(args.value)
+            try:
+                value = int(input_value, 0)
+            except ValueError:
+                old = getattr(r, input_name)
+                if isinstance(old, enum.Enum):
+                    value = type(old)[input_value]
+                else:
+                    raise ValueError('unable to parse value as an integer')
+        return value
+
+    if 'names_values' in args:
+        # 'set_multiple' - parse space-separated list of names and values
+        if len(args.names_values) < 2:
+            raise Exception('set_multiple: Specify at least one pair of names and values')
+            return
+        for ( name, value ) in zip( *[ iter(args.names_values) ] * 2 ):
+            value_final = _parse_value(name, value)
+            setattr(d.registers, name, value_final)
     else:
-        try:
-            value = int(args.value, 0)
-        except ValueError:
+        # 'set' with just a name -- display its currently set value
+        if args.value is None:
             old = getattr(r, args.name)
+            field = getattr(type(r), args.name)
+            print("Current value: %s" % old)
+            print("Possible values:")
             if isinstance(old, enum.Enum):
-                value = type(old)[args.value]
+                for v in list(type(old)):
+                    print(v)
+            elif field.size >> 16 == 1:
+                print("0")
+                print("1")
+            elif isinstance(old, bytes):
+                print("String")
             else:
-                raise ValueError('unable to parse value as an integer')
-    setattr(d.registers, args.name, value)
+                print("Integer")
+            return
+        else:
+            # or a single pair of name & value - so set that attribute
+            value_final = _parse_value(args.name, args.value)
+            setattr(d.registers, args.name, value_final)
 
 def auto_int(x):
     return int(x, 0)
@@ -107,6 +125,10 @@ def main():
     parser_set.add_argument('name', help='parameter name')
     parser_set.add_argument('value', nargs='?', help='parameter value (integer or string if supported)')
     parser_set.set_defaults(func=set)
+
+    parser_set_multiple = subparsers.add_parser('set_multiple', parents=[device_parser], help='set mulitple parameters, in pairs, e.g. `name1 value1 name2 value2`')
+    parser_set_multiple.add_argument('names_values', nargs='+', help='parameter name, space, then parameter value (integer or string if supported)')
+    parser_set_multiple.set_defaults(func=set)
 
     args = parser.parse_args()
     if 'func' not in args:
