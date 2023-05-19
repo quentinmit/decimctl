@@ -166,7 +166,7 @@ class Device(pylibftdi.device.Device):
         eeprom = create_string_buffer(128)
         self.ftdi_fn.ftdi_read_eeprom()
         self.ftdi_fn.ftdi_get_eeprom_buf(byref(eeprom), len(eeprom))
-        self.custom_name = create_string_buffer(eeprom[92:92+16]).value
+        self.custom_name = create_string_buffer(eeprom[96:96+16]).value
 
     def open(self):
         if self._opened:
